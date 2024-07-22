@@ -1,0 +1,38 @@
+[workspace]
+members = ["plugins/*"]
+resolver = "2"
+
+[workspace.dependencies]
+# plugins
+car = { path = "plugins/car" }
+track = { path = "plugins/track" }
+
+# bevy
+bevy = { version = "0.14", default-features = false }
+bevy_anyhow_alert = "0.3"
+bevy_prng = { version = "0.6", features = ["wyrand"] }
+bevy_rand = { version = "0.6", features = ["wyrand"] }
+bevy_rts_camera = { git = "https://github.com/snendev/bevy_rts_camera_2d" }
+sickle_ui = { git = "https://github.com/UmbraLuminosa/sickle_ui", rev = "2f2fae9" }
+bevy_reactive_blueprints = { git = "https://github.com/snendev/bevy-reactive-blueprints" }
+
+# avian
+avian3d = { version = "0.1" }
+
+# stdx
+anyhow = "1.0"
+rand_core = { version = "0.6" }
+thiserror = "1.0"
+
+[package]
+name = "racecar"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# plugins
+
+# bevy
+bevy = { workspace = true, features = ["bevy_winit"] }
+
+# stdx
