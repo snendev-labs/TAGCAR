@@ -240,10 +240,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0c4b4d0bd25bd0b74681c0ad21497610ce1b7c91b1022cd21c80c6fbdd9476b0"
 
 [[package]]
-name = "avian3d"
+name = "avian2d"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "54325576b6efa46576db611624db749b553d0c66e439862bdc60c43e01f012f9"
+checksum = "757274b827f77c3853fd36c4229ebeda55746fc297244bcd1104e561dab34326"
 dependencies = [
  "avian_derive",
  "bevy 0.14.0",
@@ -254,8 +254,8 @@ dependencies = [
  "indexmap",
  "itertools",
  "nalgebra",
- "parry3d",
- "parry3d-f64",
+ "parry2d",
+ "parry2d-f64",
 ]
 
 [[package]]
@@ -1318,7 +1318,7 @@ dependencies = [
 name = "car"
 version = "0.1.0"
 dependencies = [
- "avian3d",
+ "avian2d",
  "bevy 0.14.0",
  "bevy_reactive_blueprints",
 ]
@@ -2637,10 +2637,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "parry3d"
+name = "parry2d"
 version = "0.15.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aa342e0cdfc774fed0196714290ba2d85408b8ce9f295c40a0b1e05f3f8256ab"
+checksum = "41c56bf3b44b08f18a6ed01e5c6bf1a41a12efc7e8b806ce0cf50831c88f9fc8"
 dependencies = [
  "approx",
  "arrayvec",
@@ -2660,10 +2660,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "parry3d-f64"
+name = "parry2d-f64"
 version = "0.15.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fdc07fa374273eca29066d59d3ded520bf845ed582e38c0d60109459ea4ed76e"
+checksum = "416b765a3db5f3e219fcc878d649ea6dc6b93490694be846c39c7398074f90d1"
 dependencies = [
  "approx",
  "arrayvec",

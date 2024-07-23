@@ -17,7 +17,7 @@ sickle_ui = { git = "https://github.com/UmbraLuminosa/sickle_ui", rev = "2f2fae9
 bevy_reactive_blueprints = { git = "https://github.com/snendev/bevy-reactive-blueprints" }
 
 # avian
-avian3d = { version = "0.1" }
+avian2d = { version = "0.1" }
 
 # stdx
 anyhow = "1.0"
