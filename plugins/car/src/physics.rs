@@ -3,6 +3,8 @@ use bevy::prelude::*;
 
 use crate::{Car, TurnAction};
 
+#[derive(Clone, Debug)]
+#[derive(Reflect)]
 pub struct DrivingPhysics {
     pub transform: Transform,
     pub front_wheel_angle: TurnAction,

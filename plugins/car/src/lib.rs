@@ -15,13 +15,16 @@ impl Plugin for CarPlugin {
     fn build(&self, app: &mut App) {}
 }
 
-#[derive(Clone, Copy, Debug, Component)]
+#[derive(Clone, Copy, Debug)]
+#[derive(Component, Reflect)]
 pub struct AccelerateAction;
 
-#[derive(Clone, Copy, Debug, Component)]
+#[derive(Clone, Copy, Debug)]
+#[derive(Component, Reflect)]
 pub struct BrakeAction;
 
-#[derive(Clone, Copy, Debug, Component)]
+#[derive(Clone, Copy, Debug)]
+#[derive(Component, Reflect)]
 pub struct TurnAction(pub f32);
 
 impl CarPlugin {
@@ -55,7 +58,22 @@ impl CarPlugin {
     }
 }
 
-#[derive(Clone, Copy, Debug, Default, Component)]
+#[derive(Clone, Debug)]
+#[derive(Component, Reflect)]
+pub struct DrivingData {
+    pub state: DrivingPhysics,
+    pub force: Vec2,
+}
+
+impl DrivingData {
+    pub fn new(state: DrivingPhysics) -> Self {
+        let force = state.calculate_force();
+        DrivingData { state, force }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Default)]
+#[derive(Component, Reflect)]
 pub struct Car;
 
 impl Car {
@@ -64,12 +82,14 @@ impl Car {
     pub const TURNING_ANGLE: f32 = 18.;
 }
 
-#[derive(Clone, Copy, Debug, Default, Bundle)]
+#[derive(Clone, Debug, Default)]
+#[derive(Bundle)]
 pub struct CarBundle {
     pub car: Car,
 }
 
-#[derive(Clone, Debug, Default, Bundle)]
+#[derive(Clone, Debug, Default)]
+#[derive(Bundle)]
 pub struct CarPhysicsBundle {
     rigid_body: RigidBody,
     collider: Collider,
@@ -95,20 +115,8 @@ impl CarGraphicsBundle {
     }
 }
 
-#[derive(Component)]
-pub struct DrivingData {
-    pub state: DrivingPhysics,
-    pub force: Vec2,
-}
-
-impl DrivingData {
-    pub fn new(state: DrivingPhysics) -> Self {
-        let force = state.calculate_force();
-        DrivingData { state, force }
-    }
-}
-
-#[derive(Clone, Copy, Debug, Default, Reflect)]
+#[derive(Clone, Copy, Debug, Default)]
+#[derive(Reflect)]
 pub struct CarBlueprint {
     pub origin: Vec3,
 }
