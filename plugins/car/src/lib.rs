@@ -15,10 +15,7 @@ mod physics;
 pub struct CarPlugin;
 
 impl Plugin for CarPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_plugins(BlueprintPlugin::<CarBlueprint, TotalCarBundle>::default())
-            .add_plugins(BlueprintPlugin::<CarBlueprint, CarGraphicsBundle, AsChild>::default());
-    }
+    fn build(&self, app: &mut App) {}
 }
 
 #[derive(Clone, Copy, Debug, Component)]
@@ -104,30 +101,30 @@ impl DrivingData {
     }
 }
 
-#[derive(Clone, Copy, Debug, Default, Reflect)]
-pub struct CarBlueprint {
-    pub origin: Vec3,
-}
+// #[derive(Clone, Copy, Debug, Default, Reflect)]
+// pub struct CarBlueprint {
+//     pub origin: Vec3,
+// }
 
-pub type TotalCarBundle = (CarBundle, CarPhysicsBundle);
+// pub type TotalCarBundle = (CarBundle, CarPhysicsBundle);
 
-impl FromBlueprint<CarBlueprint> for TotalCarBundle {
-    type Params<'w, 's> = SystemParam<'_, AssetServer>;
+// impl FromBlueprint<CarBlueprint> for TotalCarBundle {
+//     type Params<'w, 's> = ;
 
-    fn from_blueprint(
-        _blueprint: &CarBlueprint,
-        _: &mut StaticSystemParam<Self::Params<'_, '_>>,
-    ) -> Self {
-        (CarBundle::default(), CarPhysicsBundle::default())
-    }
-}
+//     fn from_blueprint(
+//         _blueprint: &CarBlueprint,
+//         _: &mut StaticSystemParam<Self::Params<'_, '_>>,
+//     ) -> Self {
+//         (CarBundle::default(), CarPhysicsBundle::default())
+//     }
+// }
 
-impl FromBlueprint<CarBlueprint> for CarGraphicsBundle {
-    type Params<'w, 's> = Res<'w, AssetServer>;
+// impl FromBlueprint<CarBlueprint> for CarGraphicsBundle {
+//     type Params<'w, 's> = Res<'w, AssetServer>;
 
-    fn from_blueprint(
-        blueprint: &CarBlueprint,
-        params: &mut StaticSystemParam<Self::Params<'_, '_>>,
-    ) -> Self {
-    }
-}
+//     fn from_blueprint(
+//         blueprint: &CarBlueprint,
+//         params: &mut StaticSystemParam<Self::Params<'_, '_>>,
+//     ) -> Self {
+//     }
+// }
