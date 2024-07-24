@@ -2,10 +2,7 @@ use avian2d::prelude::{
     AngularVelocity, Collider, ExternalAngularImpulse, ExternalForce, ExternalImpulse, Inertia,
     LinearVelocity, Mass, RigidBody,
 };
-use bevy::{
-    ecs::system::{StaticSystemParam, SystemParam},
-    prelude::*,
-};
+use bevy::{ecs::system::StaticSystemParam, prelude::*};
 
 use bevy_reactive_blueprints::{AsChild, BlueprintPlugin, FromBlueprint};
 use physics::DrivingPhysics;
@@ -85,8 +82,18 @@ pub struct CarPhysicsBundle {
     external_angular_impulse: ExternalAngularImpulse,
 }
 
-#[derive(Clone, Debug, Bundle)]
-pub struct CarGraphicsBundle {}
+#[derive(Bundle)]
+pub struct CarGraphicsBundle {
+    pbr: PbrBundle,
+}
+
+impl CarGraphicsBundle {
+    fn from_blueprint(blueprint: &CarBlueprint) -> Self {
+        Self {
+            pbr: PbrBundle::default(),
+        }
+    }
+}
 
 #[derive(Component)]
 pub struct DrivingData {
@@ -101,30 +108,31 @@ impl DrivingData {
     }
 }
 
-// #[derive(Clone, Copy, Debug, Default, Reflect)]
-// pub struct CarBlueprint {
-//     pub origin: Vec3,
-// }
+#[derive(Clone, Copy, Debug, Default, Reflect)]
+pub struct CarBlueprint {
+    pub origin: Vec3,
+}
 
-// pub type TotalCarBundle = (CarBundle, CarPhysicsBundle);
+pub type TotalCarBundle = (CarBundle, CarPhysicsBundle);
 
-// impl FromBlueprint<CarBlueprint> for TotalCarBundle {
-//     type Params<'w, 's> = ;
+impl FromBlueprint<CarBlueprint> for TotalCarBundle {
+    type Params<'w, 's> = ();
 
-//     fn from_blueprint(
-//         _blueprint: &CarBlueprint,
-//         _: &mut StaticSystemParam<Self::Params<'_, '_>>,
-//     ) -> Self {
-//         (CarBundle::default(), CarPhysicsBundle::default())
-//     }
-// }
+    fn from_blueprint(
+        _blueprint: &CarBlueprint,
+        _: &mut StaticSystemParam<Self::Params<'_, '_>>,
+    ) -> Self {
+        (CarBundle::default(), CarPhysicsBundle::default())
+    }
+}
 
-// impl FromBlueprint<CarBlueprint> for CarGraphicsBundle {
-//     type Params<'w, 's> = Res<'w, AssetServer>;
+impl FromBlueprint<CarBlueprint> for CarGraphicsBundle {
+    type Params<'w, 's> = Res<'w, AssetServer>;
 
-//     fn from_blueprint(
-//         blueprint: &CarBlueprint,
-//         params: &mut StaticSystemParam<Self::Params<'_, '_>>,
-//     ) -> Self {
-//     }
-// }
+    fn from_blueprint(
+        blueprint: &CarBlueprint,
+        params: &mut StaticSystemParam<Self::Params<'_, '_>>,
+    ) -> Self {
+        CarGraphicsBundle::from_blueprint(blueprint)
+    }
+}
