@@ -3,6 +3,16 @@ use leafwing_input_manager::prelude::*;
 
 use car::{AccelerateAction, BrakeAction, Car, TurnAction};
 
+pub struct DriveInputPlugin;
+
+impl Plugin for DriveInputPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_plugins(InputManagerPlugin::<DriveInput>::default())
+            .add_systems(Startup, DriveInput::add_car_controller)
+            .add_systems(Update, DriveInput::car_input)
+    }
+}
+
 #[derive(Actionlike, PartialEq, Eq, Clone, Copy, Hash, Debug, Reflect)]
 pub enum DriveInput {
     Accelerate,
@@ -21,6 +31,14 @@ impl DriveInput {
         input_map.insert(DriveInput::TurnRight, KeyCode::ArrowRight);
 
         input_map
+    }
+
+    fn add_car_controller(mut commands: Commands, car_query: Query<Entity, With<Car>>) {
+        for car_entity in &car_query {
+            commands
+                .entity(car_entity)
+                .insert(InputManagerBundle::with_map(DriveInput::car_input_map()));
+        }
     }
 
     fn car_input(
