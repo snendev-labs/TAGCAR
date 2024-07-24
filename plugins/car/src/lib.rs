@@ -5,6 +5,7 @@ use avian2d::prelude::{
 use bevy::{ecs::system::{StaticSystemParam, SystemParam}, prelude::*};
 
 use bevy_reactive_blueprints::{AsChild, BlueprintPlugin, FromBlueprint};
+use physics::DrivingPhysics;
 
 mod physics;
 
@@ -17,12 +18,49 @@ impl Plugin for CarPlugin {
     }
 }
 
+#[derive(Clone, Copy, Debug)]
+#[derive(Component)]
+pub struct AccelerateAction;
+
+#[derive(Clone, Copy, Debug)]
+#[derive(Component)]
+pub struct BrakeAction;
+
+#[derive(Clone, Copy, Debug)]
+#[derive(Component)]
+pub struct TurnAction(pub f32);
+
 impl CarPlugin {
-    
+    fn calculate_driving_physics(mut commands: Commands, mut car_query: Query<(Entity, Option<&mut DrivingData>, &Transform, &TurnAction), With<Car>>) {
+        for (entity, prev_data, transform, steering) in car_query.iter_mut() {
+            let physics = DrivingPhysics::new(*transform, *steering);
+
+            let driving_data = DrivingData::new(physics);
+
+            if let Some(mut prev_data) = prev_data {
+                *prev_data = driving_data
+            } else {
+                commands.entity(entity).insert(driving_data);
+            }
+        }
+    }
+
+    fn apply_driving_physics(mut query: Query<(&DrivingData, &mut Transform, &mut ExternalForce), With<Car>>) {
+        for (physics, mut transform, mut force) in query.iter_mut() {
+            **force += physics.force;
+            transform.look_to(Vec3::new(physics.force.x, 0., physics.force.y), Vec3::Y);
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, Default, Component)]
 pub struct Car;
+
+impl Car {
+    pub const ENGINE_POWER: f32 = 100.;
+    pub const WHEEL_BASIS: f32 = 0.5;
+    pub const TURNING_ANGLE: f32 = 18.;
+}
 
 #[derive(Clone, Copy, Debug, Default, Bundle)]
 pub struct CarBundle {
@@ -46,6 +84,22 @@ pub struct CarPhysicsBundle {
 
 #[derive(Clone, Debug, Bundle)]
 pub struct CarGraphicsBundle {}
+
+#[derive(Component)]
+pub struct DrivingData {
+    pub state: DrivingPhysics,
+    pub force: Vec2,
+}
+
+impl DrivingData {
+    pub fn new(state: DrivingPhysics) -> Self {
+        let force = state.calculate_force();
+        DrivingData {
+            state,
+            force,
+        }
+    }
+}
 
 #[derive(Clone, Copy, Debug, Default)]
 #[derive(Reflect)]

@@ -1,5 +1,5 @@
 [workspace]
-members = ["plugins/*"]
+members = [ "controller","plugins/*"]
 resolver = "2"
 
 [workspace.dependencies]
