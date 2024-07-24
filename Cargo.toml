@@ -25,14 +25,17 @@ rand_core = { version = "0.6" }
 thiserror = "1.0"
 
 [package]
-name = "racecar"
+name = "tagcar"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
 # plugins
+track = { workspace = true }
 
 # bevy
-bevy = { workspace = true, features = ["bevy_winit"] }
+avian2d = { workspace = true, features = ["debug-plugin"] }
+bevy = { workspace = true, default-features = true }
+bevy_reactive_blueprints = { workspace = true }
 
 # stdx

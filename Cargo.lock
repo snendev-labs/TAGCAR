@@ -3258,13 +3258,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "racecar"
-version = "0.1.0"
-dependencies = [
- "bevy",
-]
-
-[[package]]
 name = "radsort"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3695,6 +3688,16 @@ dependencies = [
  "num-traits",
  "serde",
  "slotmap",
+]
+
+[[package]]
+name = "tagcar"
+version = "0.1.0"
+dependencies = [
+ "avian2d",
+ "bevy",
+ "bevy_reactive_blueprints",
+ "track",
 ]
 
 [[package]]
