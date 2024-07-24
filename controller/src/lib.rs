@@ -9,7 +9,7 @@ impl Plugin for DriveInputPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(InputManagerPlugin::<DriveInput>::default())
             .add_systems(Startup, DriveInput::add_car_controller)
-            .add_systems(Update, DriveInput::car_input)
+            .add_systems(Update, DriveInput::car_input);
     }
 }
 
@@ -46,25 +46,25 @@ impl DriveInput {
         car_query: Query<(Entity, &ActionState<DriveInput>), With<Car>>,
     ) {
         for (car_entity, action_state) in &car_query {
-            if action_state.pressed(DriveInput::Accelerate) {
+            if action_state.pressed(&DriveInput::Accelerate) {
                 commands.entity(car_entity).insert(AccelerateAction);
             }
 
-            if action_state.pressed(DriveInput::Brake) {
+            if action_state.pressed(&DriveInput::Brake) {
                 commands.entity(car_entity).insert(BrakeAction);
             }
 
             let mut steering_angle: f32 = 0.;
-            if action_state.pressed(DriveInput::TurnLeft) {
+            if action_state.pressed(&DriveInput::TurnLeft) {
                 steering_angle += Car::TURNING_ANGLE;
             }
-            if action_state.pressed(DriveInput::TurnRight) {
+            if action_state.pressed(&DriveInput::TurnRight) {
                 steering_angle -= Car::TURNING_ANGLE;
             }
 
             commands
                 .entity(car_entity)
-                .insert(TurnAction(steering_angle))
+                .insert(TurnAction(steering_angle));
         }
     }
 }

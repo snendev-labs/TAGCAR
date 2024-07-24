@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{color::palettes::css::BLUE, prelude::*, sprite::MaterialMesh2dBundle};
 
 fn main() {
     let mut app = App::new();
@@ -13,7 +13,8 @@ fn main() {
     });
 
     app.add_plugins(default_plugins)
-        .add_systems(Startup, setup_camera);
+        .add_systems(Startup, setup_camera)
+        .add_systems(Startup, setup_surface);
 
     app.run();
 }
@@ -22,11 +23,15 @@ fn setup_camera(mut commands: Commands) {
     commands.spawn(Camera2dBundle::default());
 }
 
-fn setup_surface(mut commands: Commands) {
+fn setup_surface(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+) {
     commands.spawn(MaterialMesh2dBundle {
         mesh: meshes.add(Rectangle::default()).into(),
         transform: Transform::default().with_scale(Vec3::splat(128.)),
-        material: materials.add(Color::from(PURPLE)),
+        material: materials.add(Color::from(BLUE)),
         ..default()
     });
 }

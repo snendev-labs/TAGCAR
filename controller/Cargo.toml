@@ -6,5 +6,5 @@ edition = "2021"
 [dependencies]
 bevy = { workspace = true }
 car = { workspace = true }
-leafwing-input-manager = { version = "0.13" }
+leafwing-input-manager = { version = "0.14" }
 
