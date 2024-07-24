@@ -2,7 +2,10 @@ use avian2d::prelude::{
     AngularVelocity, Collider, ExternalAngularImpulse, ExternalForce, ExternalImpulse, Inertia,
     LinearVelocity, Mass, RigidBody,
 };
-use bevy::{ecs::system::{StaticSystemParam, SystemParam}, prelude::*};
+use bevy::{
+    ecs::system::{StaticSystemParam, SystemParam},
+    prelude::*,
+};
 
 use bevy_reactive_blueprints::{AsChild, BlueprintPlugin, FromBlueprint};
 use physics::DrivingPhysics;
@@ -14,24 +17,27 @@ pub struct CarPlugin;
 impl Plugin for CarPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(BlueprintPlugin::<CarBlueprint, TotalCarBundle>::default())
-        .add_plugins(BlueprintPlugin::<CarBlueprint, CarGraphicsBundle, AsChild>::default());
+            .add_plugins(BlueprintPlugin::<CarBlueprint, CarGraphicsBundle, AsChild>::default());
     }
 }
 
-#[derive(Clone, Copy, Debug)]
-#[derive(Component)]
+#[derive(Clone, Copy, Debug, Component)]
 pub struct AccelerateAction;
 
-#[derive(Clone, Copy, Debug)]
-#[derive(Component)]
+#[derive(Clone, Copy, Debug, Component)]
 pub struct BrakeAction;
 
-#[derive(Clone, Copy, Debug)]
-#[derive(Component)]
+#[derive(Clone, Copy, Debug, Component)]
 pub struct TurnAction(pub f32);
 
 impl CarPlugin {
-    fn calculate_driving_physics(mut commands: Commands, mut car_query: Query<(Entity, Option<&mut DrivingData>, &Transform, &TurnAction), With<Car>>) {
+    fn calculate_driving_physics(
+        mut commands: Commands,
+        mut car_query: Query<
+            (Entity, Option<&mut DrivingData>, &Transform, &TurnAction),
+            With<Car>,
+        >,
+    ) {
         for (entity, prev_data, transform, steering) in car_query.iter_mut() {
             let physics = DrivingPhysics::new(*transform, *steering);
 
@@ -45,7 +51,9 @@ impl CarPlugin {
         }
     }
 
-    fn apply_driving_physics(mut query: Query<(&DrivingData, &mut Transform, &mut ExternalForce), With<Car>>) {
+    fn apply_driving_physics(
+        mut query: Query<(&DrivingData, &mut Transform, &mut ExternalForce), With<Car>>,
+    ) {
         for (physics, mut transform, mut force) in query.iter_mut() {
             **force += physics.force;
             transform.look_to(Vec3::new(physics.force.x, 0., physics.force.y), Vec3::Y);
@@ -80,8 +88,6 @@ pub struct CarPhysicsBundle {
     external_angular_impulse: ExternalAngularImpulse,
 }
 
-
-
 #[derive(Clone, Debug, Bundle)]
 pub struct CarGraphicsBundle {}
 
@@ -94,15 +100,11 @@ pub struct DrivingData {
 impl DrivingData {
     pub fn new(state: DrivingPhysics) -> Self {
         let force = state.calculate_force();
-        DrivingData {
-            state,
-            force,
-        }
+        DrivingData { state, force }
     }
 }
 
-#[derive(Clone, Copy, Debug, Default)]
-#[derive(Reflect)]
+#[derive(Clone, Copy, Debug, Default, Reflect)]
 pub struct CarBlueprint {
     pub origin: Vec3,
 }
@@ -110,20 +112,22 @@ pub struct CarBlueprint {
 pub type TotalCarBundle = (CarBundle, CarPhysicsBundle);
 
 impl FromBlueprint<CarBlueprint> for TotalCarBundle {
-    type Params<'w, 's> = SystemParam<'w>;
+    type Params<'w, 's> = SystemParam<'_, AssetServer>;
 
-    fn from_blueprint(blueprint: &CarBlueprint, params: &mut StaticSystemParam<Self::Params<'_, '_>>) -> Self {
-        (
-            CarBundle::default(),
-            CarPhysicsBundle::default(),
-        )
+    fn from_blueprint(
+        _blueprint: &CarBlueprint,
+        _: &mut StaticSystemParam<Self::Params<'_, '_>>,
+    ) -> Self {
+        (CarBundle::default(), CarPhysicsBundle::default())
     }
 }
 
 impl FromBlueprint<CarBlueprint> for CarGraphicsBundle {
-    type Params<'w, 's> = ;
+    type Params<'w, 's> = Res<'w, AssetServer>;
 
-    fn from_blueprint(blueprint: &CarBlueprint, params: &mut StaticSystemParam<Self::Params<'_, '_>>) -> Self {
-        
+    fn from_blueprint(
+        blueprint: &CarBlueprint,
+        params: &mut StaticSystemParam<Self::Params<'_, '_>>,
+    ) -> Self {
     }
 }
