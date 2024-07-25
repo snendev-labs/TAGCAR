@@ -4,7 +4,8 @@ use bevy::{
     sprite::{MaterialMesh2dBundle, Mesh2dHandle},
 };
 
-use car::{CarBlueprint, CarBundle, CarGraphicsBundle, CarPhysicsBundle};
+use car::{CarBlueprint, CarBundle, CarGraphicsBundle, CarPhysicsBundle, CarPlugin};
+use controller::CarControllerPlugin;
 
 fn main() {
     let mut app = App::new();
@@ -18,8 +19,8 @@ fn main() {
         ..Default::default()
     });
 
-    app.add_plugins(default_plugins)
-        .add_systems(Startup, (setup_camera, setup_surface, spawn_car));
+    app.add_plugins((default_plugins, CarPlugin, CarControllerPlugin))
+        .add_systems(Startup, (setup_camera, spawn_car));
     app.run();
 }
 
@@ -48,13 +49,11 @@ fn spawn_car(
     commands.spawn((
         CarBundle::default(),
         CarPhysicsBundle::default(),
-        CarGraphicsBundle {
-            shape: MaterialMesh2dBundle {
-                mesh: Mesh2dHandle(meshes.add(Rectangle::new(1.0, 1.0))),
-                material: materials.add(Color::from(RED)),
-                transform: Transform::from_xyz(0., 0., 0.1),
-                ..default()
-            },
-        },
+        CarGraphicsBundle::new(MaterialMesh2dBundle {
+            mesh: Mesh2dHandle(meshes.add(Rectangle::new(50., 50.))),
+            material: materials.add(Color::from(RED)),
+            transform: Transform::default(),
+            ..default()
+        }),
     ));
 }

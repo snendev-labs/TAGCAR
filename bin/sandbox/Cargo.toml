@@ -6,3 +6,4 @@ edition = "2021"
 [dependencies]
 bevy = { workspace = true, default-features = true }
 car = { workspace = true }
+controller = { workspace = true }
