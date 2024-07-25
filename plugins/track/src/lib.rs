@@ -40,9 +40,9 @@ impl TrackPlugin {
     ) {
         for (entity, track) in &tracks {
             let mut checkpoints = vec![];
-            for (position, angle) in track.checkpoints() {
+            for (index, (position, angle)) in track.checkpoints().enumerate() {
                 let entity = commands
-                    .spawn(Checkpoint::bundle(position, angle, track.thickness))
+                    .spawn(Checkpoint::bundle(index, position, angle, track.thickness))
                     .id();
                 checkpoints.push(entity);
             }
@@ -138,7 +138,7 @@ impl Track {
         self.thickness
     }
 
-    pub fn checkpoints(&self) -> impl Iterator<Item = (Vec2, f32)> + '_ {
+    pub fn checkpoints(&self) -> impl Iterator<Item = (Vec2, f32)> + Clone + '_ {
         // we want to go from
         //    ---------
         //   /
@@ -161,7 +161,7 @@ impl Track {
             )
         });
 
-        let bottom_chunk_range = (0..=self.subdivisions_per_chunk).map(move |index| {
+        let bottom_chunk_range = (0..=self.subdivisions_per_chunk).rev().map(move |index| {
             (
                 Vec2::new(x - index as f32 * separation, -y + self.thickness / 2.),
                 0.,
@@ -232,6 +232,7 @@ impl TrackInterior {
 #[derive(Clone, Debug, Default)]
 #[derive(Component, Reflect)]
 pub struct Checkpoint {
+    pub index: usize,
     pub size: Vec2,
     pub position: Vec2,
     pub angle: f32,
@@ -246,10 +247,11 @@ impl Checkpoint {
             .with_rotation(Quat::from_rotation_z(angle))
     }
 
-    pub fn bundle(position: Vec2, angle: f32, thickness: f32) -> impl Bundle {
+    pub fn bundle(index: usize, position: Vec2, angle: f32, thickness: f32) -> impl Bundle {
         let x = Self::WIDTH;
         let y = thickness * 1.1;
         let checkpoint = Checkpoint {
+            index,
             size: Vec2::new(x, y),
             position,
             angle,
@@ -270,7 +272,7 @@ impl Checkpoint {
 pub struct Checkpoints(Vec<Entity>);
 
 #[derive(Debug, Default)]
-#[derive(Component, Reflect)]
+#[derive(Component, Deref, Reflect)]
 pub struct CheckpointTracker {
     checkpoints: EntityHashSet<Entity>,
 }
@@ -291,16 +293,8 @@ impl CheckpointTracker {
         }
     }
 
-    pub fn contains(&self, checkpoint: Entity) -> bool {
-        self.checkpoints.contains(&checkpoint)
-    }
-
     pub fn drain(&mut self) -> impl Iterator<Item = Entity> + '_ {
         self.checkpoints.drain()
-    }
-
-    pub fn len(&self) -> usize {
-        self.checkpoints.len()
     }
 
     pub fn clear(&mut self) {

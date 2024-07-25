@@ -56,7 +56,6 @@ impl FromBlueprint<Resurfacer> for ResurfacerGraphicsBundle {
         params: &mut StaticSystemParam<Self::Params<'_, '_>>,
     ) -> Self {
         let params = params.deref_mut();
-        eprintln!("hellooooo");
         Self::from_resurfacer(
             resurfacer,
             params.meshes.as_mut(),

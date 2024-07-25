@@ -1,7 +1,7 @@
 use bevy_reactive_blueprints::Blueprint;
 use rand_core::RngCore;
 
-use avian2d::prelude::{Collider, RigidBody, Sensor};
+use avian2d::prelude::{Collider, LinearVelocity, RigidBody, Sensor};
 use bevy::prelude::*;
 
 use track::{Checkpoint, CheckpointTracker, Track};
@@ -22,7 +22,12 @@ impl Plugin for ResurfacerPlugin {
         app.add_plugins(GraphicsPlugin);
         app.add_systems(
             Update,
-            (Self::spawn_resurfacer, Self::resurface_track)
+            (
+                Self::track_last_checkpoint,
+                Self::drive_resurfacer,
+                Self::resurface_track,
+                Self::spawn_resurfacer,
+            )
                 .chain()
                 .in_set(ResurfacerSystems),
         );
@@ -32,31 +37,64 @@ impl Plugin for ResurfacerPlugin {
 }
 
 impl ResurfacerPlugin {
-    fn spawn_resurfacer(
-        mut commands: Commands,
-        tracks: Query<(Entity, &Track), Without<TrackResurfacer>>,
+    fn track_last_checkpoint(
+        tracks: Query<&TrackResurfacer, With<Track>>,
+        mut resurfacers: Query<
+            (&mut Resurfacer, &CheckpointTracker),
+            (Changed<CheckpointTracker>, With<Resurfacer>),
+        >,
+        checkpoints: Query<&Checkpoint>,
     ) {
-        for (track_entity, track) in &tracks {
-            let (position, angle) = track
-                .checkpoints()
-                .next()
-                .expect("track to have checkpoints");
-            let resurfacer = commands.spawn(Resurfacer::bundle(position, angle)).id();
-            commands
-                .entity(track_entity)
-                .insert(TrackResurfacer(resurfacer));
+        for resurfacer in &tracks {
+            let Ok((mut resurfacer, tracker)) = resurfacers.get_mut(**resurfacer) else {
+                continue;
+            };
+            if tracker.len() == 0 {
+                continue;
+            }
+            let Some(last_reached_checkpoint) = tracker.iter().last() else {
+                continue;
+            };
+            let checkpoint = checkpoints
+                .get(*last_reached_checkpoint)
+                .expect("tracker to track valid Checkpoint entities");
+            resurfacer.last_checkpoint_index = checkpoint.index;
+        }
+    }
+
+    fn drive_resurfacer(
+        tracks: Query<(&Track, &TrackResurfacer)>,
+        mut resurfacers: Query<(&mut LinearVelocity, &mut Transform, &Resurfacer)>,
+    ) {
+        for (track, resurfacer) in &tracks {
+            let (mut velocity, mut transform, resurfacer) = resurfacers
+                .get_mut(**resurfacer)
+                .expect("TrackResurfacer to be a valid Resurfacer entity");
+            let checkpoints = track.checkpoints().collect::<Vec<_>>();
+            let (next_checkpoint, _) = checkpoints
+                .get(resurfacer.last_checkpoint_index + 1)
+                .unwrap_or(checkpoints.get(0).expect("Track to have checkpoints"));
+            **velocity =
+                Resurfacer::SPEED * (*next_checkpoint - transform.translation.xy()).normalize();
+            let target = Vec3::new(
+                next_checkpoint.x,
+                next_checkpoint.y,
+                transform.translation.z,
+            );
+            // TODO: not working?
+            transform.look_at(target, Vec3::Z);
         }
     }
 
     fn resurface_track(
         mut commands: Commands,
-        mut trackers: Query<
+        mut resurfacers: Query<
             (&mut CheckpointTracker, &mut Entropy),
             (Changed<CheckpointTracker>, With<Resurfacer>),
         >,
         checkpoints: Query<(&Checkpoint, &Transform)>,
     ) {
-        for (mut tracker, mut entropy) in &mut trackers {
+        for (mut tracker, mut entropy) in &mut resurfacers {
             if tracker.len() == 0 {
                 continue;
             }
@@ -70,9 +108,28 @@ impl ResurfacerPlugin {
                         + Vec2::from_angle(checkpoint.angle)
                             * (-0.5 + position_on_checkpoint)
                             * checkpoint.size.y;
+                    info!("Spawning obstacle at {spawn_position}");
                     commands.spawn(Obstacle::IDK.bundle(spawn_position));
                 }
             }
+        }
+    }
+
+    fn spawn_resurfacer(
+        mut commands: Commands,
+        tracks: Query<(Entity, &Track), Without<TrackResurfacer>>,
+    ) {
+        for (track_entity, track) in &tracks {
+            let resurfacer = Resurfacer::default();
+            let (position, angle) = std::iter::repeat(track.checkpoints())
+                .flat_map(|iter| iter)
+                .skip(resurfacer.last_checkpoint_index)
+                .next()
+                .expect("Checkpoints iter to be a ring");
+            let resurfacer = commands.spawn(resurfacer.bundle(position, angle)).id();
+            commands
+                .entity(track_entity)
+                .insert(TrackResurfacer(resurfacer));
         }
     }
 }
@@ -81,23 +138,27 @@ impl ResurfacerPlugin {
 #[derive(SystemSet)]
 pub struct ResurfacerSystems;
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 #[derive(Component, Reflect)]
-pub struct Resurfacer;
+pub struct Resurfacer {
+    last_checkpoint_index: usize,
+}
 
 impl Resurfacer {
+    const STARTING_CHECKPOINT: usize = 25;
     const WIDTH: f32 = 30.;
     const Z_INDEX: f32 = 15.;
+    const SPEED: f32 = 50.;
 
     fn transform(position: Vec2, angle: f32) -> Transform {
         Transform::from_translation(Vec3::new(position.x, position.y, Self::Z_INDEX))
             .with_rotation(Quat::from_rotation_z(angle))
     }
 
-    pub fn bundle(position: Vec2, angle: f32) -> impl Bundle {
+    pub fn bundle(self, position: Vec2, angle: f32) -> impl Bundle {
         (
-            Resurfacer,
-            Blueprint::new(Resurfacer),
+            Blueprint::new(self.clone()),
+            self,
             CheckpointTracker::default(),
             Entropy::default(),
             RigidBody::Kinematic,
@@ -105,6 +166,14 @@ impl Resurfacer {
             Sensor,
             SpatialBundle::from_transform(Self::transform(position, angle)),
         )
+    }
+}
+
+impl Default for Resurfacer {
+    fn default() -> Self {
+        Resurfacer {
+            last_checkpoint_index: Self::STARTING_CHECKPOINT,
+        }
     }
 }
 
@@ -169,7 +238,7 @@ mod tests {
         let tracker = commands
             .spawn((
                 CheckpointTracker::default(),
-                Resurfacer,
+                Resurfacer::default(),
                 RigidBody::Kinematic,
                 Collider::rectangle(10., 10.),
                 SpatialBundle::from_transform(Transform::from_xyz(track.half_length(), 0., 0.)),
