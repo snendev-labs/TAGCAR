@@ -8,14 +8,14 @@ use crate::{AccelerateAction, Car, TurnAction};
 pub struct DrivingPhysics {
     pub transform: Transform,
     pub front_wheel_angle: TurnAction,
-    pub accelerate: Option<AccelerateAction>,
+    pub accelerate: AccelerateAction,
 }
 
 impl DrivingPhysics {
     pub fn new(
         transform: Transform,
         front_wheel_angle: TurnAction,
-        accelerate: Option<AccelerateAction>,
+        accelerate: AccelerateAction,
     ) -> Self {
         DrivingPhysics {
             transform,
@@ -41,9 +41,8 @@ impl DrivingPhysics {
         let force_direction = (forward + rotated_forward).normalize();
 
         match self.accelerate {
-            Some(AccelerateAction::Forward) => force_direction * Car::ENGINE_POWER,
-            Some(AccelerateAction::Backward) => -force_direction * Car::REVERSE_POWER,
-            _ => Vec2::ZERO,
+            AccelerateAction::Forward => force_direction * Car::ENGINE_POWER,
+            AccelerateAction::Backward => -force_direction * Car::REVERSE_POWER,
         }
     }
 }

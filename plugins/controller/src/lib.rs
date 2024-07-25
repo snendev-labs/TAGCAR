@@ -8,7 +8,7 @@ pub struct CarControllerPlugin;
 impl Plugin for CarControllerPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(InputManagerPlugin::<CarControl>::default())
-            .add_systems(Startup, CarControl::add_controller)
+            .add_systems(Update, CarControl::add_controller)
             .add_systems(Update, CarControl::handle_controls);
     }
 }
@@ -35,8 +35,12 @@ impl CarControl {
         input_map
     }
 
-    fn add_controller(mut commands: Commands, car_query: Query<Entity, With<Car>>) {
+    fn add_controller(
+        mut commands: Commands,
+        car_query: Query<Entity, (With<Car>, Without<InputMap<CarControl>>)>,
+    ) {
         for car in &car_query {
+            println!("Adding controller");
             commands.entity(car).insert(InputManagerBundle::with_map(
                 CarControl::leafwing_input_map(),
             ));
@@ -49,12 +53,14 @@ impl CarControl {
     ) {
         for (car_entity, action_state) in &car_query {
             if action_state.pressed(&CarControl::Accelerate) {
+                println!("Accelerate pressed");
                 commands
                     .entity(car_entity)
                     .insert(AccelerateAction::Forward);
             }
 
             if action_state.pressed(&CarControl::Brake) {
+                println!("Deaccelerate pressed");
                 commands
                     .entity(car_entity)
                     .insert(AccelerateAction::Backward);
@@ -62,9 +68,11 @@ impl CarControl {
 
             let mut steering_angle: f32 = 0.;
             if action_state.pressed(&CarControl::TurnLeft) {
+                println!("Turn left");
                 steering_angle += Car::TURNING_ANGLE;
             }
             if action_state.pressed(&CarControl::TurnRight) {
+                println!("Turn right");
                 steering_angle -= Car::TURNING_ANGLE;
             }
 

@@ -24,7 +24,11 @@ impl Plugin for CarPlugin {
         ))
         .add_systems(
             Update,
-            (Self::calculate_driving_physics, Self::apply_driving_physics)
+            (
+                Self::calculate_driving_physics,
+                Self::apply_driving_physics,
+                Self::clear_action_components,
+            )
                 .chain()
                 .in_set(DrivingSystems),
         );
@@ -58,14 +62,16 @@ impl CarPlugin {
     ) {
         for (entity, prev_data, transform, steering, accelerate) in car_query.iter_mut() {
             let steering = steering.unwrap_or(&TurnAction(0.));
-            let physics = DrivingPhysics::new(*transform, *steering, accelerate.copied());
+            if let Some(accelerate) = accelerate {
+                let physics = DrivingPhysics::new(*transform, *steering, *accelerate);
 
-            let driving_data = DrivingData::new(physics);
+                let driving_data = DrivingData::new(physics);
 
-            if let Some(mut prev_data) = prev_data {
-                *prev_data = driving_data
-            } else {
-                commands.entity(entity).insert(driving_data);
+                if let Some(mut prev_data) = prev_data {
+                    *prev_data = driving_data
+                } else {
+                    commands.entity(entity).insert(driving_data);
+                }
             }
         }
     }
@@ -76,6 +82,15 @@ impl CarPlugin {
         for (physics, mut transform, mut force) in query.iter_mut() {
             **force += physics.force;
             transform.look_to(Vec3::new(physics.force.x, 0., physics.force.y), Vec3::Y);
+        }
+    }
+
+    fn clear_action_components(mut commands: Commands, car_query: Query<Entity, With<Car>>) {
+        for car_entity in &car_query {
+            commands
+                .entity(car_entity)
+                .remove::<TurnAction>()
+                .remove::<AccelerateAction>();
         }
     }
 }
@@ -115,7 +130,7 @@ pub struct CarBundle {
     pub car: Car,
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 #[derive(Bundle)]
 pub struct CarPhysicsBundle {
     rigid_body: RigidBody,
@@ -123,15 +138,30 @@ pub struct CarPhysicsBundle {
     mass: Mass,
     inertia: Inertia,
     linear_velocity: LinearVelocity,
-    angular_velocity: AngularVelocity,
     external_force: ExternalForce,
     external_impulse: ExternalImpulse,
-    external_angular_impulse: ExternalAngularImpulse,
+}
+
+impl Default for CarPhysicsBundle {
+    fn default() -> Self {
+        CarPhysicsBundle {
+            rigid_body: RigidBody::Dynamic,
+            collider: Collider::circle(50.),
+            mass: Mass(10.),
+            ..default()
+        }
+    }
 }
 
 #[derive(Bundle)]
 pub struct CarGraphicsBundle {
     pub shape: MaterialMesh2dBundle<ColorMaterial>,
+}
+
+impl CarGraphicsBundle {
+    pub fn new(shape: MaterialMesh2dBundle<ColorMaterial>) -> Self {
+        CarGraphicsBundle { shape }
+    }
 }
 
 #[derive(Clone, Copy, Debug, Default)]

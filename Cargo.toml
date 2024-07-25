@@ -5,6 +5,7 @@ resolver = "2"
 [workspace.dependencies]
 # plugins
 car = { path = "plugins/car" }
+controller = { path = "plugins/controller" }
 track = { path = "plugins/track" }
 
 # bevy
