@@ -3,4 +3,14 @@ name = "track"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+default = []
+graphics = []
+
 [dependencies]
+avian2d = { workspace = true }
+bevy = { workspace = true }
+bevy_reactive_blueprints = { workspace = true }
+
+[dev-dependencies]
+bevy = { workspace = true, default-features = true }
