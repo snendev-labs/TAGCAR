@@ -30,7 +30,7 @@ fn setup_surface(
 ) {
     commands.spawn(MaterialMesh2dBundle {
         mesh: meshes.add(Rectangle::default()).into(),
-        transform: Transform::default().with_scale(Vec3::splat(128.)),
+        transform: Transform::default().with_scale(Vec3::splat(10000.)),
         material: materials.add(Color::from(BLUE)),
         ..default()
     });
