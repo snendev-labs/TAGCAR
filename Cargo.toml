@@ -29,9 +29,13 @@ name = "tagcar"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+default = []
+debug = []
+
 [dependencies]
 # plugins
-track = { workspace = true }
+track = { workspace = true, features = ["graphics"] }
 
 # bevy
 avian2d = { workspace = true, features = ["debug-plugin"] }

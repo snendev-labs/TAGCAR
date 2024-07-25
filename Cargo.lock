@@ -3857,6 +3857,11 @@ dependencies = [
 [[package]]
 name = "track"
 version = "0.1.0"
+dependencies = [
+ "avian2d",
+ "bevy",
+ "bevy_reactive_blueprints",
+]
 
 [[package]]
 name = "ttf-parser"
