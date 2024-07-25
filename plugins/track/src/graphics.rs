@@ -111,7 +111,7 @@ impl CheckpointGraphicsBundle {
     ) -> Self {
         Self {
             sprite: ColorMesh2dBundle {
-                material: materials.add(Color::Srgba(palettes::css::WHITE_SMOKE)),
+                material: materials.add(Color::Srgba(palettes::css::WHITE_SMOKE.with_alpha(0.1))),
                 mesh: meshes
                     .add(Rectangle::new(checkpoint.size.x, checkpoint.size.y).mesh())
                     .into(),

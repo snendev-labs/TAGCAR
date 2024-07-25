@@ -1,6 +1,3 @@
-// TODO: Track plugin using mariokart-style checkpoints and a means
-// of determining lap completion with on-the-fly lap markers
-
 use std::f32::consts::{FRAC_PI_2, PI};
 
 use avian2d::prelude::{Collider, CollisionStarted, RigidBody, Sensor};
@@ -174,7 +171,8 @@ impl Track {
         // draw N subdivisions on a half circle
         // x = r * cos(theta), y = r * sin(theta)
         // on left side, theta in range (pi/2, 3pi/2)
-        let track_center = (self.radius + self.thickness / 4.) / 2.;
+        // I don't know why this center works
+        let track_center = (self.radius + self.thickness / 3.) / 2.;
         let left_chunk_range = (1..self.subdivisions_per_chunk).map(move |index| {
             let theta = FRAC_PI_2 + PI * index as f32 / self.subdivisions_per_chunk as f32;
             (
@@ -231,43 +229,40 @@ impl TrackInterior {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Clone, Debug, Default)]
 #[derive(Component, Reflect)]
 pub struct Checkpoint {
     pub size: Vec2,
+    pub position: Vec2,
+    pub angle: f32,
 }
 
 impl Checkpoint {
     const WIDTH: f32 = 4.;
     const Z_INDEX: f32 = 10.;
 
-    fn transform(position: Vec2, angle: f32) -> Transform {
+    pub fn transform(position: Vec2, angle: f32) -> Transform {
         Transform::from_translation(Vec3::new(position.x, position.y, Self::Z_INDEX))
             .with_rotation(Quat::from_rotation_z(angle))
     }
 
-    pub fn bundle(position: Vec2, angle: f32, thickness: f32) -> CheckpointBundle {
+    pub fn bundle(position: Vec2, angle: f32, thickness: f32) -> impl Bundle {
         let x = Self::WIDTH;
         let y = thickness * 1.1;
-        CheckpointBundle {
-            checkpoint: Checkpoint {
-                size: Vec2::new(x, y),
-            },
-            rigid_body: RigidBody::Static,
-            collider: Collider::rectangle(x, y),
-            sensor: Sensor,
-            spatial: SpatialBundle::from_transform(Self::transform(position, angle)),
-        }
+        let checkpoint = Checkpoint {
+            size: Vec2::new(x, y),
+            position,
+            angle,
+        };
+        (
+            Blueprint::new(checkpoint.clone()),
+            checkpoint,
+            RigidBody::Static,
+            Collider::rectangle(x, y),
+            Sensor,
+            SpatialBundle::from_transform(Self::transform(position, angle)),
+        )
     }
-}
-
-#[derive(Bundle)]
-pub struct CheckpointBundle {
-    checkpoint: Checkpoint,
-    rigid_body: RigidBody,
-    collider: Collider,
-    sensor: Sensor,
-    spatial: SpatialBundle,
 }
 
 #[derive(Debug)]
@@ -298,6 +293,10 @@ impl CheckpointTracker {
 
     pub fn contains(&self, checkpoint: Entity) -> bool {
         self.checkpoints.contains(&checkpoint)
+    }
+
+    pub fn drain(&mut self) -> impl Iterator<Item = Entity> + '_ {
+        self.checkpoints.drain()
     }
 
     pub fn len(&self) -> usize {
