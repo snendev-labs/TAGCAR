@@ -1,4 +1,10 @@
-use bevy::{color::palettes::css::BLUE, prelude::*, sprite::MaterialMesh2dBundle};
+use bevy::{
+    color::palettes::css::{BLUE, RED},
+    prelude::*,
+    sprite::{MaterialMesh2dBundle, Mesh2dHandle},
+};
+
+use car::{CarBlueprint, CarBundle, CarGraphicsBundle, CarPhysicsBundle};
 
 fn main() {
     let mut app = App::new();
@@ -13,9 +19,7 @@ fn main() {
     });
 
     app.add_plugins(default_plugins)
-        .add_systems(Startup, setup_camera)
-        .add_systems(Startup, setup_surface);
-
+        .add_systems(Startup, (setup_camera, setup_surface, spawn_car));
     app.run();
 }
 
@@ -34,4 +38,23 @@ fn setup_surface(
         material: materials.add(Color::from(BLUE)),
         ..default()
     });
+}
+
+fn spawn_car(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+) {
+    commands.spawn((
+        CarBundle::default(),
+        CarPhysicsBundle::default(),
+        CarGraphicsBundle {
+            shape: MaterialMesh2dBundle {
+                mesh: Mesh2dHandle(meshes.add(Rectangle::new(1.0, 1.0))),
+                material: materials.add(Color::from(RED)),
+                transform: Transform::from_xyz(0., 0., 0.1),
+                ..default()
+            },
+        },
+    ));
 }

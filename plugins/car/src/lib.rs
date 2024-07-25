@@ -2,7 +2,12 @@ use avian2d::prelude::{
     AngularVelocity, Collider, ExternalAngularImpulse, ExternalForce, ExternalImpulse, Inertia,
     LinearVelocity, Mass, RigidBody,
 };
-use bevy::{ecs::system::StaticSystemParam, prelude::*};
+use bevy::{
+    color::palettes::css::RED,
+    ecs::system::StaticSystemParam,
+    prelude::*,
+    sprite::{MaterialMesh2dBundle, Mesh2dHandle},
+};
 
 use bevy_reactive_blueprints::{AsChild, BlueprintPlugin, FromBlueprint};
 use physics::DrivingPhysics;
@@ -12,16 +17,26 @@ mod physics;
 pub struct CarPlugin;
 
 impl Plugin for CarPlugin {
-    fn build(&self, app: &mut App) {}
+    fn build(&self, app: &mut App) {
+        app.add_plugins((
+            BlueprintPlugin::<CarBlueprint, TotalCarBundle>::default(),
+            BlueprintPlugin::<CarBlueprint, CarGraphicsBundle, AsChild>::default(),
+        ))
+        .add_systems(
+            Update,
+            (Self::calculate_driving_physics, Self::apply_driving_physics)
+                .chain()
+                .in_set(DrivingSystems),
+        );
+    }
 }
 
 #[derive(Clone, Copy, Debug)]
 #[derive(Component, Reflect)]
-pub struct AccelerateAction;
-
-#[derive(Clone, Copy, Debug)]
-#[derive(Component, Reflect)]
-pub struct BrakeAction;
+pub enum AccelerateAction {
+    Forward,
+    Backward,
+}
 
 #[derive(Clone, Copy, Debug)]
 #[derive(Component, Reflect)]
@@ -31,12 +46,19 @@ impl CarPlugin {
     fn calculate_driving_physics(
         mut commands: Commands,
         mut car_query: Query<
-            (Entity, Option<&mut DrivingData>, &Transform, &TurnAction),
+            (
+                Entity,
+                Option<&mut DrivingData>,
+                &Transform,
+                Option<&TurnAction>,
+                Option<&AccelerateAction>,
+            ),
             With<Car>,
         >,
     ) {
-        for (entity, prev_data, transform, steering) in car_query.iter_mut() {
-            let physics = DrivingPhysics::new(*transform, *steering);
+        for (entity, prev_data, transform, steering, accelerate) in car_query.iter_mut() {
+            let steering = steering.unwrap_or(&TurnAction(0.));
+            let physics = DrivingPhysics::new(*transform, *steering, accelerate.copied());
 
             let driving_data = DrivingData::new(physics);
 
@@ -58,6 +80,10 @@ impl CarPlugin {
     }
 }
 
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
+#[derive(SystemSet)]
+pub struct DrivingSystems;
+
 #[derive(Clone, Debug)]
 #[derive(Component, Reflect)]
 pub struct DrivingData {
@@ -78,6 +104,7 @@ pub struct Car;
 
 impl Car {
     pub const ENGINE_POWER: f32 = 100.;
+    pub const REVERSE_POWER: f32 = 50.;
     pub const WHEEL_BASIS: f32 = 0.5;
     pub const TURNING_ANGLE: f32 = 18.;
 }
@@ -104,15 +131,7 @@ pub struct CarPhysicsBundle {
 
 #[derive(Bundle)]
 pub struct CarGraphicsBundle {
-    pbr: PbrBundle,
-}
-
-impl CarGraphicsBundle {
-    fn from_blueprint(blueprint: &CarBlueprint) -> Self {
-        Self {
-            pbr: PbrBundle::default(),
-        }
-    }
+    pub shape: MaterialMesh2dBundle<ColorMaterial>,
 }
 
 #[derive(Clone, Copy, Debug, Default)]
@@ -135,12 +154,19 @@ impl FromBlueprint<CarBlueprint> for TotalCarBundle {
 }
 
 impl FromBlueprint<CarBlueprint> for CarGraphicsBundle {
-    type Params<'w, 's> = Res<'w, AssetServer>;
+    type Params<'w, 's> = (ResMut<'w, Assets<Mesh>>, ResMut<'w, Assets<ColorMaterial>>);
 
     fn from_blueprint(
         blueprint: &CarBlueprint,
         params: &mut StaticSystemParam<Self::Params<'_, '_>>,
     ) -> Self {
-        CarGraphicsBundle::from_blueprint(blueprint)
+        CarGraphicsBundle {
+            shape: MaterialMesh2dBundle {
+                mesh: Mesh2dHandle(params.0.add(Rectangle::new(1.0, 1.0))),
+                material: params.1.add(Color::from(RED)),
+                transform: Transform::from_translation(blueprint.origin),
+                ..default()
+            },
+        }
     }
 }

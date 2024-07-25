@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use leafwing_input_manager::prelude::*;
 
-use car::{AccelerateAction, BrakeAction, Car, TurnAction};
+use car::{AccelerateAction, Car, TurnAction};
 
 pub struct CarControllerPlugin;
 
@@ -49,11 +49,15 @@ impl CarControl {
     ) {
         for (car_entity, action_state) in &car_query {
             if action_state.pressed(&CarControl::Accelerate) {
-                commands.entity(car_entity).insert(AccelerateAction);
+                commands
+                    .entity(car_entity)
+                    .insert(AccelerateAction::Forward);
             }
 
             if action_state.pressed(&CarControl::Brake) {
-                commands.entity(car_entity).insert(BrakeAction);
+                commands
+                    .entity(car_entity)
+                    .insert(AccelerateAction::Backward);
             }
 
             let mut steering_angle: f32 = 0.;

@@ -1,20 +1,26 @@
 use avian2d::prelude::*;
 use bevy::prelude::*;
 
-use crate::{Car, TurnAction};
+use crate::{AccelerateAction, Car, TurnAction};
 
 #[derive(Clone, Debug)]
 #[derive(Reflect)]
 pub struct DrivingPhysics {
     pub transform: Transform,
     pub front_wheel_angle: TurnAction,
+    pub accelerate: Option<AccelerateAction>,
 }
 
 impl DrivingPhysics {
-    pub fn new(transform: Transform, front_wheel_angle: TurnAction) -> Self {
+    pub fn new(
+        transform: Transform,
+        front_wheel_angle: TurnAction,
+        accelerate: Option<AccelerateAction>,
+    ) -> Self {
         DrivingPhysics {
             transform,
             front_wheel_angle,
+            accelerate,
         }
     }
     pub fn calculate_force(&self) -> Vec2 {
@@ -33,6 +39,11 @@ impl DrivingPhysics {
         // let rotated_front_wheel = Vec2::new(rotated_front_wheel_vec3.x, rotated_front_wheel_vec3.z);
 
         let force_direction = (forward + rotated_forward).normalize();
-        force_direction * Car::ENGINE_POWER
+
+        match self.accelerate {
+            Some(AccelerateAction::Forward) => force_direction * Car::ENGINE_POWER,
+            Some(AccelerateAction::Backward) => -force_direction * Car::REVERSE_POWER,
+            _ => Vec2::ZERO,
+        }
     }
 }
