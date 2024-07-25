@@ -1,34 +1,51 @@
+use std::marker::PhantomData;
+
 use avian2d::prelude::CollisionStarted;
-use bevy::prelude::*;
+use bevy::{ecs::system::EntityCommand, prelude::*, reflect::GetTypeRegistration};
 use track::{CheckpointTracker, LapComplete};
 
-pub struct LapTagPlugin;
+pub trait TagIt {
+    fn finish_lap() -> impl EntityCommand;
+}
 
-impl Plugin for LapTagPlugin {
+#[derive(Default)]
+pub struct LapTagPlugin<Tag> {
+    marker: PhantomData<Tag>,
+}
+
+impl<Tag> Plugin for LapTagPlugin<Tag>
+where
+    Tag: Component + Default + GetTypeRegistration + TagIt + Send + Sync + 'static,
+{
     fn build(&self, app: &mut App) {
         app.add_systems(
             Update,
             (
                 Self::transfer_tag,
                 Self::reset_lap_on_tag,
-                Self::score_completed_laps,
+                Self::complete_laps,
             )
                 .chain()
                 .in_set(LapTagSystems),
         );
         app.register_type::<Score>()
-            .register_type::<TagIt>()
+            .register_type::<Tag>()
             .register_type::<CanBeIt>();
     }
 }
 
-impl LapTagPlugin {
+impl<Tag> LapTagPlugin<Tag>
+where
+    Tag: TagIt + Component,
+{
     fn transfer_tag(
         mut commands: Commands,
         mut collisions: EventReader<CollisionStarted>,
-        tag_its: Query<Entity, With<TagIt>>,
-        can_be_its: Query<Entity, (With<CanBeIt>, Without<TagIt>)>,
-    ) {
+        tag_its: Query<Entity, With<Tag>>,
+        can_be_its: Query<Entity, (With<CanBeIt>, Without<Tag>)>,
+    ) where
+        Tag: Default,
+    {
         for CollisionStarted(entity1, entity2) in collisions.read() {
             let entity1_is_it = tag_its.contains(*entity1);
             let entity2_is_it = tag_its.contains(*entity2);
@@ -42,15 +59,15 @@ impl LapTagPlugin {
             } else {
                 continue;
             };
-            commands.entity(it_entity).remove::<TagIt>();
-            commands.entity(tagged_entity).insert(TagIt);
+            commands.entity(it_entity).remove::<Tag>();
+            commands.entity(tagged_entity).insert(Tag::default());
         }
     }
 
     fn reset_lap_on_tag(
         mut lap_trackers: Query<&mut CheckpointTracker>,
-        new_tag_its: Query<Entity, Added<TagIt>>,
-        mut removed_tag_its: RemovedComponents<TagIt>,
+        new_tag_its: Query<Entity, Added<Tag>>,
+        mut removed_tag_its: RemovedComponents<Tag>,
     ) {
         for entity in new_tag_its.iter().chain(removed_tag_its.read()) {
             let Ok(mut tracker) = lap_trackers.get_mut(entity) else {
@@ -60,15 +77,15 @@ impl LapTagPlugin {
         }
     }
 
-    fn score_completed_laps(
+    fn complete_laps(
+        mut commands: Commands,
         mut completed_laps: EventReader<LapComplete>,
-        mut scores: Query<&mut Score, (With<TagIt>, With<CheckpointTracker>)>,
+        racers: Query<Entity, (With<Tag>, With<CheckpointTracker>)>,
     ) {
         for lap in completed_laps.read() {
-            let Ok(mut score) = scores.get_mut(lap.racer) else {
-                continue;
-            };
-            **score += 1;
+            if racers.contains(lap.racer) {
+                commands.entity(lap.racer).add(Tag::finish_lap());
+            }
         }
     }
 }
@@ -83,8 +100,31 @@ pub struct Score(u32);
 
 #[derive(Clone, Copy, Debug)]
 #[derive(Component, Reflect)]
-pub struct TagIt;
-
-#[derive(Clone, Copy, Debug)]
-#[derive(Component, Reflect)]
 pub struct CanBeIt;
+
+#[derive(Clone, Copy, Debug, Default)]
+#[derive(Component, Reflect)]
+pub struct LapTagIt;
+
+impl TagIt for LapTagIt {
+    fn finish_lap() -> impl EntityCommand {
+        |entity: Entity, world: &mut World| {
+            let mut score = world
+                .get_mut::<Score>(entity)
+                .expect("LapTagIt command should only be fired for valid `Score`ing entities");
+            **score += 1;
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Default)]
+#[derive(Component, Reflect)]
+pub struct BombTagIt;
+
+impl TagIt for BombTagIt {
+    fn finish_lap() -> impl EntityCommand {
+        |entity: Entity, world: &mut World| {
+            world.entity_mut(entity).despawn_recursive();
+        }
+    }
+}
