@@ -1,0 +1,17 @@
+[package]
+name = "resurfacer"
+version = "0.1.0"
+edition = "2021"
+
+[features]
+default = []
+graphics = []
+
+[dependencies]
+avian2d = { workspace = true }
+bevy = { workspace = true }
+bevy_prng = { workspace = true }
+bevy_rand = { workspace = true }
+bevy_reactive_blueprints = { workspace = true }
+rand_core = { workspace = true }
+track = { workspace = true }
