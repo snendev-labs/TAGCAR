@@ -290,7 +290,7 @@ impl CheckpointTracker {
         self.checkpoints.insert(checkpoint);
         if self.checkpoints.len() >= expected_total {
             self.clear();
-            Some(LapComplete(self_entity))
+            Some(LapComplete { racer: self_entity })
         } else {
             None
         }
@@ -311,7 +311,9 @@ impl CheckpointTracker {
 
 #[derive(Debug)]
 #[derive(Deref, Event, Reflect)]
-pub struct LapComplete(Entity);
+pub struct LapComplete {
+    pub racer: Entity,
+}
 
 #[cfg(test)]
 mod tests {
