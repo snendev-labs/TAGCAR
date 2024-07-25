@@ -1,4 +1,3 @@
-use avian2d::prelude::*;
 use bevy::prelude::*;
 
 use track::{Track, TrackInterior};
@@ -9,7 +8,8 @@ fn main() {
     let mut app = App::new();
     app.add_plugins(DefaultPlugins);
     app.add_plugins(TagcarPlugins);
-    app.add_plugins(PhysicsDebugPlugin::default());
+    #[cfg(feature = "debug")]
+    app.add_plugins(avian2d::prelude::PhysicsDebugPlugin::default());
     app.add_systems(Startup, (spawn_camera, spawn_track));
     app.run();
 }

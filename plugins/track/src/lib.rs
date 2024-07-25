@@ -3,33 +3,23 @@
 
 use std::f32::consts::{FRAC_PI_2, PI};
 
-#[cfg(feature = "graphics")]
-use std::ops::DerefMut;
-
 use avian2d::prelude::{Collider, CollisionStarted, RigidBody, Sensor};
 use bevy::color::palettes;
 use bevy::prelude::*;
 use bevy::utils::EntityHashSet;
 use bevy_reactive_blueprints::Blueprint;
+
 #[cfg(feature = "graphics")]
-use bevy_reactive_blueprints::{AsChild, BlueprintPlugin, FromBlueprint};
+mod graphics;
+#[cfg(feature = "graphics")]
+pub use graphics::*;
 
 pub struct TrackPlugin;
 
 impl Plugin for TrackPlugin {
     fn build(&self, app: &mut App) {
         #[cfg(feature = "graphics")]
-        app.add_plugins(BlueprintPlugin::<Track, TrackGraphicsBundle, AsChild>::default())
-            .add_plugins(BlueprintPlugin::<
-                TrackInterior,
-                TrackInteriorGraphicsBundle,
-                AsChild,
-            >::default())
-            .add_plugins(BlueprintPlugin::<
-                Checkpoint,
-                CheckpointGraphicsBundle,
-                AsChild,
-            >::default());
+        app.add_plugins(GraphicsPlugin);
         app.add_event::<LapComplete>();
         app.add_systems(
             Update,
@@ -207,44 +197,6 @@ impl Track {
     }
 }
 
-#[cfg(feature = "graphics")]
-#[derive(Bundle)]
-pub struct TrackGraphicsBundle {
-    sprite: ColorMesh2dBundle,
-}
-
-#[cfg(feature = "graphics")]
-impl TrackGraphicsBundle {
-    pub fn from_track(
-        track: &Track,
-        meshes: &mut Assets<Mesh>,
-        materials: &mut Assets<ColorMaterial>,
-    ) -> Self {
-        Self {
-            sprite: ColorMesh2dBundle {
-                material: materials.add(Track::ASPHALT),
-                mesh: meshes
-                    .add(Capsule2d::new(track.radius, track.half_length).mesh())
-                    .into(),
-                ..Default::default()
-            },
-        }
-    }
-}
-
-#[cfg(feature = "graphics")]
-impl FromBlueprint<Track> for TrackGraphicsBundle {
-    type Params<'w, 's> = (ResMut<'w, Assets<Mesh>>, ResMut<'w, Assets<ColorMaterial>>);
-
-    fn from_blueprint(
-        track: &Track,
-        params: &mut bevy::ecs::system::StaticSystemParam<Self::Params<'_, '_>>,
-    ) -> Self {
-        let params = params.deref_mut();
-        Self::from_track(track, params.0.as_mut(), params.1.as_mut())
-    }
-}
-
 #[derive(Clone, Debug, Default)]
 #[derive(Component, Reflect)]
 pub struct TrackInterior {
@@ -279,47 +231,11 @@ impl TrackInterior {
     }
 }
 
-#[cfg(feature = "graphics")]
-#[derive(Bundle)]
-pub struct TrackInteriorGraphicsBundle {
-    sprite: ColorMesh2dBundle,
-}
-
-#[cfg(feature = "graphics")]
-impl TrackInteriorGraphicsBundle {
-    pub fn new(
-        interior: &TrackInterior,
-        meshes: &mut Assets<Mesh>,
-        materials: &mut Assets<ColorMaterial>,
-    ) -> Self {
-        Self {
-            sprite: ColorMesh2dBundle {
-                material: materials.add(Track::GRASS),
-                mesh: meshes
-                    .add(Capsule2d::new(interior.radius, interior.half_length).mesh())
-                    .into(),
-                ..Default::default()
-            },
-        }
-    }
-}
-
-#[cfg(feature = "graphics")]
-impl FromBlueprint<TrackInterior> for TrackInteriorGraphicsBundle {
-    type Params<'w, 's> = (ResMut<'w, Assets<Mesh>>, ResMut<'w, Assets<ColorMaterial>>);
-
-    fn from_blueprint(
-        interior: &TrackInterior,
-        params: &mut bevy::ecs::system::StaticSystemParam<Self::Params<'_, '_>>,
-    ) -> Self {
-        let params = params.deref_mut();
-        Self::new(interior, params.0.as_mut(), params.1.as_mut())
-    }
-}
-
-#[derive(Debug)]
+#[derive(Debug, Default)]
 #[derive(Component, Reflect)]
-pub struct Checkpoint;
+pub struct Checkpoint {
+    pub size: Vec2,
+}
 
 impl Checkpoint {
     const WIDTH: f32 = 4.;
@@ -329,7 +245,9 @@ impl Checkpoint {
         let x = Self::WIDTH;
         let y = thickness * 1.1;
         CheckpointBundle {
-            checkpoint: Checkpoint,
+            checkpoint: Checkpoint {
+                size: Vec2::new(x, y),
+            },
             rigid_body: RigidBody::Static,
             collider: Collider::rectangle(x, y),
             sensor: Sensor,
@@ -348,42 +266,6 @@ pub struct CheckpointBundle {
     collider: Collider,
     sensor: Sensor,
     spatial: SpatialBundle,
-}
-
-#[cfg(feature = "graphics")]
-#[derive(Bundle)]
-pub struct CheckpointGraphicsBundle {
-    sprite: ColorMesh2dBundle,
-}
-
-#[cfg(feature = "graphics")]
-impl CheckpointGraphicsBundle {
-    pub fn new(
-        checkpoint: &Checkpoint,
-        meshes: &mut Assets<Mesh>,
-        materials: &mut Assets<ColorMaterial>,
-    ) -> Self {
-        Self {
-            sprite: ColorMesh2dBundle {
-                material: materials.add(Color::Srgba(palettes::css::WHITE_SMOKE)),
-                mesh: meshes.add(Rectangle::new(x, y).mesh()).into(),
-                ..Default::default()
-            },
-        }
-    }
-}
-
-#[cfg(feature = "graphics")]
-impl FromBlueprint<TrackInterior> for TrackInteriorGraphicsBundle {
-    type Params<'w, 's> = (ResMut<'w, Assets<Mesh>>, ResMut<'w, Assets<ColorMaterial>>);
-
-    fn from_blueprint(
-        interior: &TrackInterior,
-        params: &mut bevy::ecs::system::StaticSystemParam<Self::Params<'_, '_>>,
-    ) -> Self {
-        let params = params.deref_mut();
-        Self::new(interior, params.0.as_mut(), params.1.as_mut())
-    }
 }
 
 #[derive(Debug)]
@@ -409,6 +291,10 @@ impl CheckpointTracker {
         } else {
             None
         }
+    }
+
+    pub fn contains(&self, checkpoint: Entity) -> bool {
+        self.checkpoints.contains(&checkpoint)
     }
 
     pub fn clear(&mut self) {
