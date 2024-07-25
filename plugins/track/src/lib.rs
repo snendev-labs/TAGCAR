@@ -241,6 +241,11 @@ impl Checkpoint {
     const WIDTH: f32 = 4.;
     const Z_INDEX: f32 = 10.;
 
+    fn transform(position: Vec2, angle: f32) -> Transform {
+        Transform::from_translation(Vec3::new(position.x, position.y, Self::Z_INDEX))
+            .with_rotation(Quat::from_rotation_z(angle))
+    }
+
     pub fn bundle(position: Vec2, angle: f32, thickness: f32) -> CheckpointBundle {
         let x = Self::WIDTH;
         let y = thickness * 1.1;
@@ -251,10 +256,7 @@ impl Checkpoint {
             rigid_body: RigidBody::Static,
             collider: Collider::rectangle(x, y),
             sensor: Sensor,
-            spatial: SpatialBundle::from_transform(
-                Transform::from_translation(Vec3::new(position.x, position.y, Self::Z_INDEX))
-                    .with_rotation(Quat::from_rotation_z(angle)),
-            ),
+            spatial: SpatialBundle::from_transform(Self::transform(position, angle)),
         }
     }
 }
@@ -287,6 +289,7 @@ impl CheckpointTracker {
     ) -> Option<LapComplete> {
         self.checkpoints.insert(checkpoint);
         if self.checkpoints.len() >= expected_total {
+            self.clear();
             Some(LapComplete(self_entity))
         } else {
             None
@@ -295,6 +298,10 @@ impl CheckpointTracker {
 
     pub fn contains(&self, checkpoint: Entity) -> bool {
         self.checkpoints.contains(&checkpoint)
+    }
+
+    pub fn len(&self) -> usize {
+        self.checkpoints.len()
     }
 
     pub fn clear(&mut self) {
@@ -308,11 +315,16 @@ pub struct LapComplete(Entity);
 
 #[cfg(test)]
 mod tests {
+    use std::time::Duration;
+
     use super::*;
-    use avian2d::PhysicsPlugins;
+    use avian2d::{
+        prelude::{Physics, PhysicsTime, TimestepMode},
+        PhysicsPlugins,
+    };
     use bevy::{ecs::system::RunSystemOnce, scene::ScenePlugin};
 
-    fn test_app() -> App {
+    fn test_app() -> (App, Entity, Entity, Entity) {
         let mut app = App::new();
         app.add_plugins((
             MinimalPlugins,
@@ -320,29 +332,51 @@ mod tests {
             ScenePlugin,
             PhysicsPlugins::default(),
         ));
+        app.insert_resource(Time::<Physics>::from_timestep(TimestepMode::FixedOnce {
+            delta: Duration::from_secs_f32(1. / 60.),
+        }));
         app.add_plugins(TrackPlugin);
-        app.world_mut().run_system_once(spawn_track_and_tracker);
-        app
+        let (e1, e2, e3) = app.world_mut().run_system_once(spawn_track_and_tracker);
+        (app, e1, e2, e3)
     }
 
-    fn spawn_track_and_tracker(mut commands: Commands) {
+    fn spawn_track_and_tracker(mut commands: Commands) -> (Entity, Entity, Entity) {
         let track = Track::default();
         let interior = TrackInterior::from_track(&track);
-        commands.spawn((
-            CheckpointTracker::default(),
-            Collider::rectangle(10., 10.),
-            SpatialBundle::from_transform(Transform::from_xyz(track.half_length, 0., 0.)),
-        ));
-        commands.spawn(interior.bundle());
-        commands.spawn(track.bundle());
+        let tracker = commands
+            .spawn((
+                CheckpointTracker::default(),
+                RigidBody::Kinematic,
+                Collider::rectangle(10., 10.),
+                SpatialBundle::from_transform(Transform::from_xyz(track.half_length, 0., 0.)),
+            ))
+            .id();
+        let interior = commands.spawn(interior.bundle()).id();
+        let track = commands.spawn(track.bundle()).id();
+        (tracker, track, interior)
     }
 
     #[test]
     fn test_lap_completion() {
-        let mut app = test_app();
+        let (mut app, tracker, track, _) = test_app();
 
-        app.update();
+        let track = app.world_mut().get::<Track>(track).unwrap();
+        for (index, (position, angle)) in track.clone().checkpoints().enumerate() {
+            let events = app.world_mut().resource::<Events<LapComplete>>();
+            let mut reader = events.get_reader();
+            assert!(reader.read(events).find(|lap| ***lap == tracker).is_none());
+            let reached_checkpoints = app.world_mut().get::<CheckpointTracker>(tracker).unwrap();
+            assert_eq!(reached_checkpoints.len(), index);
+            let mut transform = app.world_mut().get_mut::<Transform>(tracker).unwrap();
+            *transform = Checkpoint::transform(position, angle);
+            app.update();
+            app.update();
+        }
 
-        unimplemented!()
+        let events = app.world_mut().resource::<Events<LapComplete>>();
+        let mut reader = events.get_reader();
+        assert!(reader.read(events).find(|lap| ***lap == tracker).is_some());
+        let reached_checkpoints = app.world_mut().get::<CheckpointTracker>(tracker).unwrap();
+        assert_eq!(reached_checkpoints.len(), 0);
     }
 }
