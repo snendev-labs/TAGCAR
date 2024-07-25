@@ -92,16 +92,17 @@ impl ResurfacerPlugin {
             (&mut CheckpointTracker, &mut Entropy),
             (Changed<CheckpointTracker>, With<Resurfacer>),
         >,
-        checkpoints: Query<(&Checkpoint, &Transform)>,
+        mut checkpoints: Query<(&Checkpoint, &Transform, Option<&mut CheckpointObstacles>)>,
     ) {
         for (mut tracker, mut entropy) in &mut resurfacers {
             if tracker.len() == 0 {
                 continue;
             }
-            for entity in tracker.drain() {
-                let (checkpoint, transform) = checkpoints
-                    .get(entity)
+            for checkpoint_entity in tracker.drain() {
+                let (checkpoint, transform, checkpoint_obstacles) = checkpoints
+                    .get_mut(checkpoint_entity)
                     .expect("tracker to track valid checkpoint entities");
+                let mut new_obstacles = vec![];
                 while entropy.next_u32() < u32::MAX / 3 {
                     let position_on_checkpoint = entropy.next_u32() as f32 / u32::MAX as f32;
                     let spawn_position = transform.translation.xy()
@@ -109,7 +110,19 @@ impl ResurfacerPlugin {
                             * (-0.5 + position_on_checkpoint)
                             * checkpoint.size.y;
                     info!("Spawning obstacle at {spawn_position}");
-                    commands.spawn(Obstacle::IDK.bundle(spawn_position));
+                    let obstacle = commands.spawn(Obstacle::IDK.bundle(spawn_position)).id();
+                    new_obstacles.push(obstacle);
+                }
+                if let Some(mut checkpoint_obstacles) = checkpoint_obstacles {
+                    for entity in checkpoint_obstacles.drain() {
+                        info!("Despawning obstacle {entity:?}");
+                        commands.entity(entity).despawn_recursive();
+                    }
+                    checkpoint_obstacles.extend(new_obstacles);
+                } else {
+                    commands
+                        .entity(checkpoint_entity)
+                        .insert(CheckpointObstacles::new(new_obstacles));
                 }
             }
         }
@@ -201,6 +214,24 @@ impl Obstacle {
                 Self::Z_INDEX,
             )),
         )
+    }
+}
+
+#[derive(Debug)]
+#[derive(Component, Deref, Reflect)]
+pub struct CheckpointObstacles(Vec<Entity>);
+
+impl CheckpointObstacles {
+    pub fn new(obstacles: Vec<Entity>) -> Self {
+        Self(obstacles)
+    }
+
+    pub fn extend(&mut self, obstacles: Vec<Entity>) {
+        self.0.extend(obstacles);
+    }
+
+    pub fn drain(&mut self) -> impl Iterator<Item = Entity> + '_ {
+        self.0.drain(..)
     }
 }
 
