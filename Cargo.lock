@@ -3667,6 +3667,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d66dc143e6b11c1eddc06d5c423cfc97062865baf299914ab64caa38182078fe"
 
 [[package]]
+name = "simple-easing"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "832ddd7df0d98d6fd93b973c330b7c8e0742d5cb8f1afc7dea89dba4d2531aa1"
+
+[[package]]
 name = "slab"
 version = "0.4.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3790,10 +3796,9 @@ version = "0.1.0"
 dependencies = [
  "avian2d",
  "bevy",
- "bevy_prng",
- "bevy_rand",
  "bevy_reactive_blueprints",
  "resurfacer",
+ "simple-easing",
  "track",
 ]
 
