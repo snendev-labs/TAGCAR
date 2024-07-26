@@ -55,38 +55,52 @@ impl CarPlugin {
                 Option<&mut DrivingData>,
                 &Transform,
                 Option<&TurnAction>,
-                Option<&AccelerateAction>,
+                &AccelerateAction,
             ),
             With<Car>,
         >,
     ) {
-        for (entity, prev_data, transform, steering, accelerate) in car_query.iter_mut() {
+        for (entity, prev_data, transform, steering, accelerate) in &mut car_query {
             let steering = steering.unwrap_or(&TurnAction(0.));
-            if let Some(accelerate) = accelerate {
-                let physics = DrivingPhysics::new(*transform, *steering, *accelerate);
+            println!("Acceleration registered");
+            let physics = DrivingPhysics::new(*transform, *steering, *accelerate);
 
-                let driving_data = DrivingData::new(physics);
+            let driving_data = DrivingData::new(physics);
 
-                if let Some(mut prev_data) = prev_data {
-                    *prev_data = driving_data
-                } else {
-                    commands.entity(entity).insert(driving_data);
-                }
+            if let Some(mut prev_data) = prev_data {
+                println!("Driving data changed");
+                *prev_data = driving_data
+            } else {
+                println!("Driving data added");
+                commands.entity(entity).insert(driving_data);
             }
         }
     }
 
     fn apply_driving_physics(
-        mut query: Query<(&DrivingData, &mut Transform, &mut ExternalForce), With<Car>>,
+        mut query: Query<
+            (
+                &DrivingData,
+                &mut Transform,
+                &mut ExternalForce,
+                &LinearVelocity,
+            ),
+            With<Car>,
+        >,
     ) {
-        for (physics, mut transform, mut force) in query.iter_mut() {
+        for (physics, mut transform, mut force, velocity) in query.iter_mut() {
+            println!("{:?}", physics.force);
+            println!("Applying physics");
             **force += physics.force;
-            transform.look_to(Vec3::new(physics.force.x, 0., physics.force.y), Vec3::Y);
+            println!("{:?}", force);
+            println!("{:?}", velocity);
+            transform.look_to(Vec3::new(physics.force.x, physics.force.y, 0.), Vec3::Y);
         }
     }
 
     fn clear_action_components(mut commands: Commands, car_query: Query<Entity, With<Car>>) {
         for car_entity in &car_query {
+            println!("Driving components cleared");
             commands
                 .entity(car_entity)
                 .remove::<TurnAction>()
@@ -148,7 +162,10 @@ impl Default for CarPhysicsBundle {
             rigid_body: RigidBody::Dynamic,
             collider: Collider::circle(50.),
             mass: Mass(10.),
-            ..default()
+            inertia: Default::default(),
+            linear_velocity: Default::default(),
+            external_force: Default::default(),
+            external_impulse: Default::default(),
         }
     }
 }
