@@ -5,8 +5,10 @@ resolver = "2"
 [workspace.dependencies]
 # plugins
 car = { path = "plugins/car" }
+laptag = { path = "plugins/laptag" }
 track = { path = "plugins/track" }
 resurfacer = { path = "plugins/resurfacer" }
+scoreboard = { path = "plugins/scoreboard" }
 
 # bevy
 avian2d = { version = "0.1" }
@@ -37,6 +39,7 @@ debug = []
 # plugins
 resurfacer = { workspace = true, features = ["graphics"] }
 track = { workspace = true, features = ["graphics"] }
+scoreboard = { workspace = true }
 
 # bevy
 avian2d = { workspace = true, features = ["debug-plugin"] }

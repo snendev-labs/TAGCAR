@@ -98,6 +98,12 @@ pub struct LapTagSystems;
 #[derive(Component, Deref, DerefMut, Reflect)]
 pub struct Score(u32);
 
+impl Score {
+    pub fn get(&self) -> u32 {
+        self.0
+    }
+}
+
 #[derive(Clone, Copy, Debug)]
 #[derive(Component, Reflect)]
 pub struct CanBeIt;

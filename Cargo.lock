@@ -3594,6 +3594,7 @@ name = "scoreboard"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "laptag",
  "sickle_ui",
 ]
 
@@ -3851,6 +3852,7 @@ dependencies = [
  "bevy",
  "bevy_reactive_blueprints",
  "resurfacer",
+ "scoreboard",
  "simple-easing",
  "track",
 ]

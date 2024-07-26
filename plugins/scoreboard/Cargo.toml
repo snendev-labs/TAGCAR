@@ -5,4 +5,5 @@ edition = "2021"
 
 [dependencies]
 bevy = { workspace = true }
+laptag = { workspace = true }
 sickle_ui = { workspace = true }
