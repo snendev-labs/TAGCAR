@@ -601,6 +601,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy_dolly"
+version = "0.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e784bbab334c8025fdb175ad8a4f81d88ea82fa954714f2cf435565c806cbfc8"
+dependencies = [
+ "bevy",
+ "bevy_math",
+ "bevy_transform",
+ "leafwing-input-manager",
+]
+
+[[package]]
 name = "bevy_ecs"
 version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1432,6 +1444,15 @@ dependencies = [
  "rustix",
  "wayland-backend",
  "wayland-client",
+]
+
+[[package]]
+name = "camera"
+version = "0.1.0"
+dependencies = [
+ "avian2d",
+ "bevy",
+ "bevy_dolly",
 ]
 
 [[package]]
@@ -4162,6 +4183,7 @@ dependencies = [
  "bevy",
  "bevy-inspector-egui",
  "bevy_reactive_blueprints",
+ "camera",
  "car",
  "controller",
  "laptag",
