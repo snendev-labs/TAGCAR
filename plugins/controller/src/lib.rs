@@ -3,6 +3,16 @@ use leafwing_input_manager::prelude::*;
 
 use car::{AccelerateAction, Car, DrivingSystems, SteerAction};
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(Reflect)]
+#[derive(Actionlike)]
+pub enum CarControl {
+    Accelerate,
+    Brake,
+    TurnLeft,
+    TurnRight,
+}
+
 pub struct CarControllerPlugin;
 
 impl Plugin for CarControllerPlugin {
@@ -21,12 +31,12 @@ impl Plugin for CarControllerPlugin {
 impl CarControllerPlugin {
     fn add_controller(
         mut commands: Commands,
-        car_query: Query<Entity, (With<Car>, Without<InputMap<CarControl>>)>,
+        car_query: Query<(Entity, &Controller), Without<InputMap<CarControl>>>,
     ) {
-        for car in &car_query {
+        for (car, controller) in &car_query {
             println!("Adding controller");
             commands.entity(car).insert(InputManagerBundle::with_map(
-                CarControl::leafwing_input_map(),
+                controller.leafwing_input_map(),
             ));
         }
     }
@@ -67,25 +77,28 @@ impl CarControllerPlugin {
 #[derive(SystemSet)]
 pub struct CarControlSystems;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-#[derive(Reflect)]
-#[derive(Actionlike)]
-pub enum CarControl {
-    Accelerate,
-    Brake,
-    TurnLeft,
-    TurnRight,
+#[derive(Clone, Copy, Debug)]
+#[derive(Component, Reflect)]
+pub enum Controller {
+    ArrowKeys,
+    WASDKeys,
 }
 
-impl CarControl {
-    fn leafwing_input_map() -> InputMap<CarControl> {
-        let mut input_map = InputMap::default();
-
-        input_map.insert(CarControl::Accelerate, KeyCode::ArrowUp);
-        input_map.insert(CarControl::Brake, KeyCode::ArrowDown);
-        input_map.insert(CarControl::TurnLeft, KeyCode::ArrowLeft);
-        input_map.insert(CarControl::TurnRight, KeyCode::ArrowRight);
-
-        input_map
+impl Controller {
+    fn leafwing_input_map(&self) -> InputMap<CarControl> {
+        match self {
+            Controller::ArrowKeys => InputMap::new([
+                (CarControl::Accelerate, KeyCode::KeyW),
+                (CarControl::Brake, KeyCode::KeyS),
+                (CarControl::TurnLeft, KeyCode::KeyA),
+                (CarControl::TurnRight, KeyCode::KeyD),
+            ]),
+            Controller::WASDKeys => InputMap::new([
+                (CarControl::Accelerate, KeyCode::ArrowUp),
+                (CarControl::Brake, KeyCode::ArrowDown),
+                (CarControl::TurnLeft, KeyCode::ArrowLeft),
+                (CarControl::TurnRight, KeyCode::ArrowRight),
+            ]),
+        }
     }
 }

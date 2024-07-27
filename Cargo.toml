@@ -4,13 +4,14 @@ resolver = "2"
 
 [workspace.dependencies]
 # plugins
+bot_controller = { path = "plugins/bot-controller" }
 car = { path = "plugins/car" }
-laptag = { path = "plugins/laptag" }
 controller = { path = "plugins/controller" }
-track = { path = "plugins/track" }
+laptag = { path = "plugins/laptag" }
 resurfacer = { path = "plugins/resurfacer" }
 scoreboard = { path = "plugins/scoreboard" }
 slowmo = { path = "plugins/slowmo" }
+track = { path = "plugins/track" }
 
 # bevy
 avian2d = { version = "0.1" }

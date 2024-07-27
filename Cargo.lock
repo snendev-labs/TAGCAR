@@ -1365,6 +1365,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "bot_controller"
+version = "0.1.0"
+dependencies = [
+ "avian2d",
+ "bevy",
+ "car",
+ "laptag",
+]
+
+[[package]]
 name = "bumpalo"
 version = "3.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
