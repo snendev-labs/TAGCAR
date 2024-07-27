@@ -1,15 +1,10 @@
 use avian2d::prelude::PhysicsDebugPlugin;
 #[cfg(feature = "debug")]
 use avian2d::{prelude::Gravity, PhysicsPlugins};
-use bevy::{app::PluginGroupBuilder, prelude::*};
+use bevy::{app::PluginGroupBuilder, input::common_conditions::input_just_pressed, prelude::*};
 #[cfg(feature = "debug")]
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_reactive_blueprints::BlueprintsPlugin;
-
-use car::CarPlugin;
-use controller::CarControllerPlugin;
-use resurfacer::ResurfacerPlugin;
-use track::TrackPlugin;
 
 pub struct TagcarPlugins;
 
@@ -23,10 +18,11 @@ impl PluginGroup for TagcarPlugins {
         builder
             .add(PhysicsPlugin)
             .add(BlueprintsPlugin)
-            .add(TrackPlugin)
-            .add(CarPlugin)
-            .add(ResurfacerPlugin)
-            .add(CarControllerPlugin)
+            .add(car::CarPlugin)
+            .add(controller::CarControllerPlugin)
+            .add(track::TrackPlugin)
+            .add(resurfacer::ResurfacerPlugin)
+            .add(SlowmoPlugin)
     }
 }
 
@@ -36,5 +32,18 @@ impl Plugin for PhysicsPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(PhysicsPlugins::default());
         app.insert_resource(Gravity::ZERO);
+    }
+}
+
+pub struct SlowmoPlugin;
+
+impl Plugin for SlowmoPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_plugins(slowmo::SlowmoPlugin).configure_sets(
+            Update,
+            slowmo::TriggerSlowmoSystems.run_if(
+                on_event::<track::LapComplete>().or_else(input_just_pressed(KeyCode::KeyP)),
+            ),
+        );
     }
 }

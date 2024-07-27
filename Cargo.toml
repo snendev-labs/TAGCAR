@@ -8,6 +8,7 @@ car = { path = "plugins/car" }
 controller = { path = "plugins/controller" }
 track = { path = "plugins/track" }
 resurfacer = { path = "plugins/resurfacer" }
+slowmo = { path = "plugins/slowmo" }
 
 # bevy
 avian2d = { version = "0.1" }
@@ -41,6 +42,7 @@ car = { workspace = true, features = ["graphics"] }
 controller = { workspace = true }
 resurfacer = { workspace = true, features = ["graphics"] }
 track = { workspace = true, features = ["graphics"] }
+slowmo = { workspace = true }
 
 # bevy
 avian2d = { workspace = true }
@@ -49,4 +51,3 @@ bevy_reactive_blueprints = { workspace = true }
 bevy-inspector-egui = { workspace = true, optional = true }
 
 # stdx
-simple-easing = { workspace = true }
