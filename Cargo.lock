@@ -1450,7 +1450,6 @@ dependencies = [
 name = "camera"
 version = "0.1.0"
 dependencies = [
- "avian2d",
  "bevy",
  "bevy_dolly",
 ]

@@ -1,4 +1,3 @@
-use avian2d::prelude::LinearVelocity;
 use bevy::prelude::*;
 use bevy_dolly::prelude::{Dolly, Position, Rig, Smooth};
 
@@ -30,24 +29,16 @@ impl GameCameraPlugin {
         ));
     }
 
-    fn camera_tracking(
-        tracker: Query<(&CameraTracker, &Transform, Option<&LinearVelocity>)>,
-        mut rigs: Query<&mut Rig>,
-    ) {
-        let Ok((CameraTracker { bounds }, transform, velocity)) = tracker.get_single() else {
+    fn camera_tracking(tracker: Query<(&CameraTracker, &Transform)>, mut rigs: Query<&mut Rig>) {
+        let Ok((CameraTracker { bounds }, transform)) = tracker.get_single() else {
             return;
         };
-        let velocity = velocity.map(|velocity| **velocity).unwrap_or(Vec2::ZERO);
         let mut rig = rigs.single_mut();
         let camera_driver = rig.driver_mut::<Position>();
 
         camera_driver.position = Vec3::new(
-            (transform.translation.x + velocity.x)
-                .max(bounds.min.x)
-                .min(bounds.max.x),
-            (transform.translation.y + velocity.y)
-                .max(bounds.min.y)
-                .min(bounds.max.y),
+            transform.translation.x.max(bounds.min.x).min(bounds.max.x),
+            transform.translation.y.max(bounds.min.y).min(bounds.max.y),
             0.,
         );
     }
