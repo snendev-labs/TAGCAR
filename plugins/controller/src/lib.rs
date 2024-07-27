@@ -87,13 +87,13 @@ pub enum Controller {
 impl Controller {
     fn leafwing_input_map(&self) -> InputMap<CarControl> {
         match self {
-            Controller::ArrowKeys => InputMap::new([
+            Controller::WASDKeys => InputMap::new([
                 (CarControl::Accelerate, KeyCode::KeyW),
                 (CarControl::Brake, KeyCode::KeyS),
                 (CarControl::TurnLeft, KeyCode::KeyA),
                 (CarControl::TurnRight, KeyCode::KeyD),
             ]),
-            Controller::WASDKeys => InputMap::new([
+            Controller::ArrowKeys => InputMap::new([
                 (CarControl::Accelerate, KeyCode::ArrowUp),
                 (CarControl::Brake, KeyCode::ArrowDown),
                 (CarControl::TurnLeft, KeyCode::ArrowLeft),

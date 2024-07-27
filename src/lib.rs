@@ -24,6 +24,7 @@ impl PluginGroup for TagcarPlugins {
             .add(resurfacer::ResurfacerPlugin)
             .add(scoreboard::ScoreboardPlugin)
             .add(SlowmoPlugin)
+            .add(bot_controller::BotControllerPlugin)
             .add(camera::GameCameraPlugin)
     }
 }

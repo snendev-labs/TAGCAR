@@ -33,11 +33,13 @@ impl BotControllerPlugin {
         >,
     ) {
         for (bot, state) in &mut bots {
-            let (bot_transform, bot_velocity, bot_lap_tag, bot_bomb_tag) = cars.get(bot).unwrap();
-            let bot_transform = *bot_transform;
-            let bot_velocity = **bot_velocity;
-            let has_lap_tag = bot_lap_tag.is_some();
-            let has_bomb_tag = bot_bomb_tag.is_some();
+            let Ok((bot_transform, bot_velocity, bot_lap_tag, bot_bomb_tag)) = cars.get(bot) else {
+                continue;
+            };
+            let _bot_transform = *bot_transform;
+            let _bot_velocity = **bot_velocity;
+            let _has_lap_tag = bot_lap_tag.is_some();
+            let _has_bomb_tag = bot_bomb_tag.is_some();
 
             // either do some raycasting or iterate cars and other things
             // avian2d::raycasting::
@@ -58,15 +60,13 @@ impl BotControllerPlugin {
         mut commands: Commands,
         bots: Query<(Entity, &BotState), With<BotController>>,
     ) {
-        for car_entity in &bots {
-            // commands
-            //     .entity(car_entity)
-            //     .insert(AccelerateAction::Forward);
+        for (car, _bot) in &bots {
+            commands.entity(car).insert(AccelerateAction::Forward);
 
             // commands
             //     .entity(car_entity)
             //     .insert(AccelerateAction::Backward);
-
+            let _ = SteerAction(0.);
             // commands
             //     .entity(car_entity)
             //     .insert(SteerAction(steering_angle));
