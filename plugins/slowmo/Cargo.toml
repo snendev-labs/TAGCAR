@@ -1,0 +1,9 @@
+[package]
+name = "slowmo"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+avian2d = { workspace = true }
+bevy = { workspace = true }
+simple-easing = { workspace = true }

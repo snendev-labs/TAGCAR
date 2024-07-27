@@ -10,6 +10,7 @@ controller = { path = "plugins/controller" }
 track = { path = "plugins/track" }
 resurfacer = { path = "plugins/resurfacer" }
 scoreboard = { path = "plugins/scoreboard" }
+slowmo = { path = "plugins/slowmo" }
 
 # bevy
 avian2d = { version = "0.1" }
@@ -45,7 +46,7 @@ resurfacer = { workspace = true, features = ["graphics"] }
 track = { workspace = true, features = ["graphics"] }
 laptag = { workspace = true }
 scoreboard = { workspace = true }
-sickle_ui = { workspace = true }
+slowmo = { workspace = true }
 
 # bevy
 avian2d = { workspace = true }
@@ -54,4 +55,3 @@ bevy_reactive_blueprints = { workspace = true }
 bevy-inspector-egui = { workspace = true, optional = true }
 
 # stdx
-simple-easing = { workspace = true }
