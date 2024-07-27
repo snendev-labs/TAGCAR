@@ -10,6 +10,7 @@ track = { path = "plugins/track" }
 resurfacer = { path = "plugins/resurfacer" }
 
 # bevy
+avian2d = { version = "0.1" }
 bevy = { version = "0.14", default-features = false }
 bevy_anyhow_alert = "0.3"
 bevy-inspector-egui = "0.25"
@@ -19,12 +20,10 @@ bevy_reactive_blueprints = { git = "https://github.com/snendev/bevy-reactive-blu
 bevy_rts_camera = { git = "https://github.com/snendev/bevy_rts_camera_2d" }
 sickle_ui = { git = "https://github.com/UmbraLuminosa/sickle_ui", rev = "2f2fae9" }
 
-# avian
-avian2d = { version = "0.1" }
-
 # stdx
 anyhow = "1.0"
 rand_core = { version = "0.6" }
+simple-easing = { version = "1.0" }
 thiserror = "1.0"
 
 [package]
@@ -47,8 +46,7 @@ track = { workspace = true, features = ["graphics"] }
 avian2d = { workspace = true }
 bevy = { workspace = true, default-features = true }
 bevy_reactive_blueprints = { workspace = true }
-bevy_prng = { workspace = true }
-bevy_rand = { workspace = true }
 bevy-inspector-egui = { workspace = true, optional = true }
 
 # stdx
+simple-easing = { workspace = true }

@@ -161,7 +161,7 @@ impl Resurfacer {
     const STARTING_CHECKPOINT: usize = 25;
     const WIDTH: f32 = 30.;
     const Z_INDEX: f32 = 15.;
-    const SPEED: f32 = 50.;
+    const SPEED: f32 = 120.;
 
     fn transform(position: Vec2, angle: f32) -> Transform {
         Transform::from_translation(Vec3::new(position.x, position.y, Self::Z_INDEX))
