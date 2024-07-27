@@ -103,10 +103,6 @@ impl Score {
     pub fn new(num: u32) -> Self {
         Score(num)
     }
-
-    pub fn get(&self) -> u32 {
-        self.0
-    }
 }
 
 #[derive(Clone, Copy, Debug)]

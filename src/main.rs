@@ -1,8 +1,9 @@
 use bevy::prelude::*;
 
 use car::CarBlueprint;
-use tagcar::TagcarPlugins;
 use track::{Track, TrackInterior};
+
+use tagcar::TagcarPlugins;
 
 fn main() {
     let mut app = App::new();

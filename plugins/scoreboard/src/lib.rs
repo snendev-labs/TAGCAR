@@ -44,7 +44,7 @@ impl ScoreboardPlugin {
             println!("Score change");
             let mut scores: Vec<(String, u32)> = scores_query
                 .iter()
-                .map(|(car_name, score)| ((*car_name).0.clone(), (*score).get()))
+                .map(|(car_name, score)| ((*car_name).0.clone(), **score))
                 .collect::<Vec<(String, u32)>>();
 
             // b.cmp(a) in order to get reverse sorting with largest scores first
@@ -101,5 +101,11 @@ pub struct Scoreboard;
 pub struct ScoreboardUI;
 
 #[derive(Clone, Debug)]
-#[derive(Component)]
+#[derive(Component, Deref)]
 pub struct CarName(pub String);
+
+impl CarName {
+    pub fn new(name: String) -> Self {
+        CarName(name)
+    }
+}
