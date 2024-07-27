@@ -1,12 +1,46 @@
 use std::marker::PhantomData;
 
 use avian2d::prelude::CollisionStarted;
-use bevy::{ecs::system::EntityCommand, prelude::*, reflect::GetTypeRegistration};
+use bevy::prelude::*;
+use bevy::{app::PluginGroupBuilder, ecs::system::EntityCommand, reflect::GetTypeRegistration};
 
 use track::{CheckpointTracker, LapComplete};
 
+#[cfg(feature = "graphics")]
+mod particles;
+#[cfg(feature = "graphics")]
+pub use particles::*;
+
 pub trait TagIt {
     fn finish_lap() -> impl EntityCommand;
+
+    #[cfg(feature = "graphics")]
+    type Effect: Component;
+
+    #[cfg(feature = "graphics")]
+    fn spawn_effects(position: Vec2) -> impl bevy::ecs::world::Command {
+        move |world: &mut World| {
+            // let mut effects =
+            //     world.query_filtered::<(&mut EffectSpawner, &mut Transform), With<Self::Effect>>();
+            // let (mut effect, mut transform) = effects.single_mut(world);
+            // transform.translation.x = position.x;
+            // transform.translation.y = position.y;
+            // effect.reset();
+        }
+    }
+}
+
+pub struct LapTagPlugins;
+
+impl PluginGroup for LapTagPlugins {
+    fn build(self) -> PluginGroupBuilder {
+        let builder = PluginGroupBuilder::start::<Self>();
+        #[cfg(feature = "graphics")]
+        let builder = builder.add(ParticlesPlugin);
+        builder
+            .add(LapTagPlugin::<ScoreTagIt>::default())
+            .add(LapTagPlugin::<BombTagIt>::default())
+    }
 }
 
 #[derive(Default)]
@@ -81,10 +115,12 @@ where
     fn complete_laps(
         mut commands: Commands,
         mut completed_laps: EventReader<LapComplete>,
-        racers: Query<Entity, (With<Tag>, With<CheckpointTracker>)>,
+        racers: Query<&Transform, (With<Tag>, With<CheckpointTracker>)>,
     ) {
         for lap in completed_laps.read() {
-            if racers.contains(lap.racer) {
+            if let Ok(transform) = racers.get(lap.racer) {
+                #[cfg(feature = "graphics")]
+                commands.add(Tag::spawn_effects(transform.translation.xy()));
                 commands.entity(lap.racer).add(Tag::finish_lap());
             }
         }
@@ -111,14 +147,17 @@ pub struct CanBeIt;
 
 #[derive(Clone, Copy, Debug, Default)]
 #[derive(Component, Reflect)]
-pub struct LapTagIt;
+pub struct ScoreTagIt;
 
-impl TagIt for LapTagIt {
+impl TagIt for ScoreTagIt {
+    #[cfg(feature = "graphics")]
+    type Effect = ConfettiParticles;
+
     fn finish_lap() -> impl EntityCommand {
         |entity: Entity, world: &mut World| {
             let mut score = world
                 .get_mut::<Score>(entity)
-                .expect("LapTagIt command should only be fired for valid `Score`ing entities");
+                .expect("ScoreTagIt command should only be fired for valid `Score`ing entities");
             **score += 1;
         }
     }
@@ -129,6 +168,9 @@ impl TagIt for LapTagIt {
 pub struct BombTagIt;
 
 impl TagIt for BombTagIt {
+    #[cfg(feature = "graphics")]
+    type Effect = ExplosionParticles;
+
     fn finish_lap() -> impl EntityCommand {
         |entity: Entity, world: &mut World| {
             world.entity_mut(entity).despawn_recursive();

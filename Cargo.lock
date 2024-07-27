@@ -1171,6 +1171,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy_turborand"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "80af7e4c275beaaf16d33c1b45993d126e97da992eaca76f89f702a75b6cc171"
+dependencies = [
+ "bevy",
+ "instant",
+ "serde",
+ "turborand",
+]
+
+[[package]]
 name = "bevy_ui"
 version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2477,6 +2489,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "instant"
+version = "0.1.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e0242819d153cba4b4b05a5a8f2a7e9bbf97b6055b2a002b395c96b5ff3c0222"
+dependencies = [
+ "cfg-if",
+ "js-sys",
+ "wasm-bindgen",
+ "web-sys",
+]
+
+[[package]]
 name = "io-kit-sys"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2588,6 +2612,7 @@ version = "0.1.0"
 dependencies = [
  "avian2d",
  "bevy",
+ "seldom_pixel",
  "track",
 ]
 
@@ -3869,6 +3894,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "seldom_pixel"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1a0b2bd051a4f73cb0e62895b9667b6cad62c4afe1b65160aa849dae9a132b51"
+dependencies = [
+ "bevy",
+ "bevy_turborand",
+ "seldom_pixel_macros",
+]
+
+[[package]]
+name = "seldom_pixel_macros"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "befb773628bbd9a34027951b6d0ecb6a8294a83a541d0e5a0a0f72895959978e"
+dependencies = [
+ "quote",
+ "syn 1.0.109",
+]
+
+[[package]]
 name = "semver"
 version = "1.0.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4375,6 +4421,17 @@ name = "ttf-parser"
 version = "0.24.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8686b91785aff82828ed725225925b33b4fde44c4bb15876e5f7c832724c420a"
+
+[[package]]
+name = "turborand"
+version = "0.10.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ffa9ae3c65785079fa553e8aea4ae4b12579b5c5029b4133b54ea3afb2e3e9fa"
+dependencies = [
+ "getrandom",
+ "instant",
+ "serde",
+]
 
 [[package]]
 name = "twox-hash"

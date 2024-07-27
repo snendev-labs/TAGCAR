@@ -5,12 +5,12 @@ resolver = "2"
 [workspace.dependencies]
 # plugins
 car = { path = "plugins/car" }
-laptag = { path = "plugins/laptag" }
 controller = { path = "plugins/controller" }
-track = { path = "plugins/track" }
+laptag = { path = "plugins/laptag" }
 resurfacer = { path = "plugins/resurfacer" }
 scoreboard = { path = "plugins/scoreboard" }
 slowmo = { path = "plugins/slowmo" }
+track = { path = "plugins/track" }
 
 # bevy
 avian2d = { version = "0.1" }
@@ -21,6 +21,7 @@ bevy_prng = { version = "0.7", features = ["wyrand"] }
 bevy_rand = { version = "0.7", features = ["wyrand"] }
 bevy_reactive_blueprints = { git = "https://github.com/snendev/bevy-reactive-blueprints" }
 bevy_rts_camera = { git = "https://github.com/snendev/bevy_rts_camera_2d" }
+seldom_pixel = { version = "0.7", features = ["particle"] }
 sickle_ui = { git = "https://github.com/UmbraLuminosa/sickle_ui", rev = "2f2fae9" }
 
 # stdx
@@ -42,11 +43,11 @@ debug = ["dep:bevy-inspector-egui", "avian2d/debug-plugin"]
 # plugins
 car = { workspace = true, features = ["graphics"] }
 controller = { workspace = true }
+laptag = { workspace = true, features = ["graphics"] }
 resurfacer = { workspace = true, features = ["graphics"] }
-track = { workspace = true, features = ["graphics"] }
-laptag = { workspace = true }
 scoreboard = { workspace = true }
 slowmo = { workspace = true }
+track = { workspace = true, features = ["graphics"] }
 
 # bevy
 avian2d = { workspace = true }

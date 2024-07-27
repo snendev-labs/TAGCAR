@@ -3,7 +3,12 @@ name = "laptag"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+default = []
+graphics = ["dep:seldom_pixel"]
+
 [dependencies]
 avian2d = { workspace = true }
-bevy = { workspace = true, features = ["bevy_pbr"] }
+bevy = { workspace = true }
+seldom_pixel = { workspace = true, optional = true }
 track = { workspace = true }

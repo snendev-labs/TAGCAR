@@ -286,7 +286,7 @@ mod tests {
 
     #[test]
     fn test_lap_completion() {
-        let (mut app, tracker, track, _) = test_app();
+        let (mut _app, _tracker, _track, _) = test_app();
 
         // let track = app.world_mut().get::<Track>(track).unwrap();
         // for (index, (position, angle)) in track.clone().checkpoints().enumerate() {
