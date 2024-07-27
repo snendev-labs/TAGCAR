@@ -2,6 +2,7 @@ use std::marker::PhantomData;
 
 use avian2d::prelude::CollisionStarted;
 use bevy::{ecs::system::EntityCommand, prelude::*, reflect::GetTypeRegistration};
+
 use track::{CheckpointTracker, LapComplete};
 
 pub trait TagIt {

@@ -4,7 +4,7 @@ use avian2d::prelude::{Physics, PhysicsTime};
 use bevy::prelude::*;
 use sickle_ui::prelude::*;
 
-use car::CarBundle;
+use car::{CarBlueprint, CarBundle};
 use laptag::Score;
 use scoreboard::{CarName, Scoreboard, ScoreboardUI};
 use track::{LapComplete, Track, TrackInterior};
@@ -21,10 +21,10 @@ fn main() {
         Startup,
         (
             spawn_camera,
-            spawn_track,
             spawn_cars,
             spawn_scoreboard,
             insert_timer,
+            spawn_game,
         ),
     );
     app.add_systems(Update, (slowmo_on_lap_completion, update_score));
@@ -35,8 +35,13 @@ fn spawn_camera(mut commands: Commands) {
     commands.spawn(Camera2dBundle::default());
 }
 
-fn spawn_track(mut commands: Commands) {
+fn spawn_game(mut commands: Commands) {
     let track = Track::default();
+    let (start_line_center, angle) = track.checkpoints().next().unwrap();
+    commands.spawn(CarBlueprint::new(
+        start_line_center,
+        angle + std::f32::consts::PI,
+    ));
     let interior = TrackInterior::from_track(&track);
     commands.spawn(interior.bundle());
     commands.spawn(track.bundle());
