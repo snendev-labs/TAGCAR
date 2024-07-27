@@ -4,7 +4,7 @@ use rand_core::RngCore;
 use avian2d::prelude::{Collider, LinearVelocity, RigidBody, Sensor};
 use bevy::prelude::*;
 
-use track::{Checkpoint, CheckpointTracker, Track};
+use track::{Checkpoint, CheckpointTracker, Track, TrackInterior, Wall};
 
 mod entropy;
 pub use entropy::*;
@@ -95,31 +95,61 @@ impl ResurfacerPlugin {
             (&mut CheckpointTracker, &mut Entropy),
             (Changed<CheckpointTracker>, With<Resurfacer>),
         >,
-        mut checkpoints: Query<(&Checkpoint, &Transform, Option<&mut CheckpointObstacles>)>,
+        mut checkpoints: Query<(&Checkpoint, Option<&mut CheckpointObstacles>)>,
+        other_colliders: Query<
+            &Transform,
+            (
+                With<Collider>,
+                Without<Checkpoint>,
+                Without<Track>,
+                Without<TrackInterior>,
+                Without<Wall>,
+            ),
+        >,
+        obstacles: Query<Entity, With<Obstacle>>,
     ) {
         for (mut tracker, mut entropy) in &mut resurfacers {
             if tracker.len() == 0 {
                 continue;
             }
             for checkpoint_entity in tracker.drain() {
-                let (checkpoint, transform, checkpoint_obstacles) = checkpoints
+                let (checkpoint, checkpoint_obstacles) = checkpoints
                     .get_mut(checkpoint_entity)
                     .expect("tracker to track valid checkpoint entities");
                 let mut new_obstacles = vec![];
+                // initialize the set of collider positions to the set of other collider positions
+                // it will be updated with the positions of spawned stuff positions as we go
+                // this will be used to stop us from spawning overlapping entities as well as
+                // spawning obstacles on top of drivers
+                let mut collider_positions = other_colliders
+                    .iter()
+                    .map(|transform| transform.translation.xy())
+                    .collect::<Vec<_>>();
                 while entropy.next_u32() < u32::MAX / 3 {
-                    let position_on_checkpoint = entropy.next_u32() as f32 / u32::MAX as f32;
-                    let spawn_position = transform.translation.xy()
-                        + Vec2::from_angle(checkpoint.angle)
-                            * (-0.5 + position_on_checkpoint)
-                            * checkpoint.size.y;
-                    info!("Spawning obstacle at {spawn_position}");
-                    let obstacle = commands.spawn(Obstacle::IDK.bundle(spawn_position)).id();
+                    let rand_decimal = entropy.next_u32() as f32 / u32::MAX as f32;
+                    let checkpoint_width_position = (rand_decimal - 0.5) * checkpoint.size.x * 0.9;
+                    let spawn_position = checkpoint.position
+                        + Vec2::from_angle(checkpoint.angle) * checkpoint_width_position;
+                    collider_positions.push(spawn_position);
+
+                    // don't spawn if you collide with something else meaningful
+                    if collider_positions
+                        .iter()
+                        .any(|position| position.distance(spawn_position) < Peg::RADIUS)
+                    {
+                        continue;
+                    }
+                    let obstacle = commands
+                        .spawn((Obstacle::Peg, Peg.bundle(spawn_position)))
+                        .id();
                     new_obstacles.push(obstacle);
                 }
                 if let Some(mut checkpoint_obstacles) = checkpoint_obstacles {
                     for entity in checkpoint_obstacles.drain() {
-                        info!("Despawning obstacle {entity:?}");
-                        commands.entity(entity).despawn_recursive();
+                        if obstacles.contains(entity) {
+                            info!("Despawning obstacle {entity:?}");
+                            commands.entity(entity).despawn_recursive();
+                        }
                     }
                     checkpoint_obstacles.extend(new_obstacles);
                 } else {
@@ -209,22 +239,29 @@ pub struct TrackResurfacer(Entity);
 #[derive(Component, Reflect)]
 pub enum Obstacle {
     #[default]
-    IDK,
+    Peg,
 }
 
-impl Obstacle {
+#[derive(Clone, Copy, Debug, Default)]
+#[derive(Component, Reflect)]
+pub struct Peg;
+
+impl Peg {
     const Z_INDEX: f32 = 12.;
+    const RADIUS: f32 = 20.;
 
     pub fn bundle(self, position: Vec2) -> impl Bundle {
         (
             Blueprint::new(self.clone()),
             self,
-            Name::new(format!("Obstacle: {self:?}")),
+            Name::new(format!("Peg Obstacle")),
+            RigidBody::Static,
             SpatialBundle::from_transform(Transform::from_xyz(
                 position.x,
                 position.y,
                 Self::Z_INDEX,
             )),
+            Collider::circle(Self::RADIUS),
         )
     }
 }
