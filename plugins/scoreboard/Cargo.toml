@@ -4,6 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-bevy = { workspace = true }
+bevy = { workspace = true, features = ["bevy_ui"] }
 laptag = { workspace = true }
 sickle_ui = { workspace = true }
