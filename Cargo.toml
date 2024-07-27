@@ -1,10 +1,11 @@
 [workspace]
-members = ["bin/*", "plugins/*"]
+members = ["plugins/*"]
 resolver = "2"
 
 [workspace.dependencies]
 # plugins
 car = { path = "plugins/car" }
+controller = { path = "plugins/controller" }
 track = { path = "plugins/track" }
 resurfacer = { path = "plugins/resurfacer" }
 
@@ -12,6 +13,7 @@ resurfacer = { path = "plugins/resurfacer" }
 avian2d = { version = "0.1" }
 bevy = { version = "0.14", default-features = false }
 bevy_anyhow_alert = "0.3"
+bevy-inspector-egui = "0.25"
 bevy_prng = { version = "0.7", features = ["wyrand"] }
 bevy_rand = { version = "0.7", features = ["wyrand"] }
 bevy_reactive_blueprints = { git = "https://github.com/snendev/bevy-reactive-blueprints" }
@@ -30,18 +32,21 @@ version = "0.1.0"
 edition = "2021"
 
 [features]
-default = []
-debug = []
+default = ["debug"]
+debug = ["dep:bevy-inspector-egui", "avian2d/debug-plugin"]
 
 [dependencies]
 # plugins
+car = { workspace = true, features = ["graphics"] }
+controller = { workspace = true }
 resurfacer = { workspace = true, features = ["graphics"] }
 track = { workspace = true, features = ["graphics"] }
 
 # bevy
-avian2d = { workspace = true, features = ["debug-plugin"] }
+avian2d = { workspace = true }
 bevy = { workspace = true, default-features = true }
 bevy_reactive_blueprints = { workspace = true }
+bevy-inspector-egui = { workspace = true, optional = true }
 
 # stdx
 simple-easing = { workspace = true }
