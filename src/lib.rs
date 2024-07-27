@@ -3,7 +3,7 @@ use bevy::{app::PluginGroupBuilder, prelude::*};
 use bevy_reactive_blueprints::BlueprintsPlugin;
 
 use resurfacer::ResurfacerPlugin;
-use scoreboard::ScoreBoardPlugin;
+use scoreboard::ScoreboardPlugin;
 use track::TrackPlugin;
 
 pub struct TagcarPlugins;
@@ -15,6 +15,6 @@ impl PluginGroup for TagcarPlugins {
             .add(BlueprintsPlugin)
             .add(TrackPlugin)
             .add(ResurfacerPlugin)
-            .add(ScoreBoardPlugin)
+            .add(ScoreboardPlugin)
     }
 }
