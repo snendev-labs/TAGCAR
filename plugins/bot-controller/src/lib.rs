@@ -43,8 +43,8 @@ impl BotControllerPlugin {
             // avian2d::raycasting::
 
             let next_state = BotState {
-                ideal_position,
-                ideal_rotation,
+                ideal_position: Vec2::ZERO,
+                ideal_rotation: 0.,
             };
             if let Some(mut state) = state {
                 *state = next_state;

@@ -5,6 +5,7 @@ resolver = "2"
 [workspace.dependencies]
 # plugins
 bot_controller = { path = "plugins/bot-controller" }
+camera = { path = "plugins/camera" }
 car = { path = "plugins/car" }
 controller = { path = "plugins/controller" }
 laptag = { path = "plugins/laptag" }
@@ -17,6 +18,7 @@ track = { path = "plugins/track" }
 avian2d = { version = "0.1" }
 bevy = { version = "0.14", default-features = false }
 bevy_anyhow_alert = "0.3"
+bevy_dolly = { version = "0.0.4" }
 bevy-inspector-egui = "0.25"
 bevy_prng = { version = "0.7", features = ["wyrand"] }
 bevy_rand = { version = "0.7", features = ["wyrand"] }
@@ -41,6 +43,8 @@ debug = ["dep:bevy-inspector-egui", "avian2d/debug-plugin"]
 
 [dependencies]
 # plugins
+bot_controller = { workspace = true }
+camera = { workspace = true }
 car = { workspace = true, features = ["graphics"] }
 controller = { workspace = true }
 resurfacer = { workspace = true, features = ["graphics"] }
