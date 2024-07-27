@@ -1,11 +1,8 @@
 use bevy::prelude::*;
-use sickle_ui::prelude::*;
 
-use car::{CarBlueprint, CarBundle};
-use laptag::Score;
-use scoreboard::{CarName, Scoreboard, ScoreboardUI};
+use car::CarBlueprint;
 use tagcar::TagcarPlugins;
-use track::{LapComplete, Track, TrackInterior};
+use track::{Track, TrackInterior};
 
 fn main() {
     let mut app = App::new();
