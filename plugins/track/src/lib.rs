@@ -113,7 +113,7 @@ pub struct Track {
 
 impl Default for Track {
     fn default() -> Self {
-        Self::new(800., 400., 320., 10)
+        Self::new(1600., 800., 600., 10)
     }
 }
 
