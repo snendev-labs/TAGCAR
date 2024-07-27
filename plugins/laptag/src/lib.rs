@@ -99,6 +99,10 @@ pub struct LapTagSystems;
 pub struct Score(u32);
 
 impl Score {
+    pub fn new(num: u32) -> Self {
+        Score(num)
+    }
+
     pub fn get(&self) -> u32 {
         self.0
     }

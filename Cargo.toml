@@ -39,7 +39,10 @@ debug = []
 # plugins
 resurfacer = { workspace = true, features = ["graphics"] }
 track = { workspace = true, features = ["graphics"] }
+laptag = { workspace = true }
 scoreboard = { workspace = true }
+car = { workspace = true }
+sickle_ui = { workspace = true }
 
 # bevy
 avian2d = { workspace = true, features = ["debug-plugin"] }

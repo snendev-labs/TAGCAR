@@ -2,7 +2,11 @@ use std::time::Duration;
 
 use avian2d::prelude::{Physics, PhysicsTime};
 use bevy::prelude::*;
+use sickle_ui::prelude::*;
 
+use car::CarBundle;
+use laptag::Score;
+use scoreboard::{CarName, Scoreboard, ScoreboardUI};
 use track::{LapComplete, Track, TrackInterior};
 
 use tagcar::TagcarPlugins;
@@ -13,8 +17,17 @@ fn main() {
     app.add_plugins(TagcarPlugins);
     #[cfg(feature = "debug")]
     app.add_plugins(avian2d::prelude::PhysicsDebugPlugin::default());
-    app.add_systems(Startup, (spawn_camera, spawn_track));
-    app.add_systems(Update, slowmo_on_lap_completion);
+    app.add_systems(
+        Startup,
+        (
+            spawn_camera,
+            spawn_track,
+            spawn_cars,
+            spawn_scoreboard,
+            insert_timer,
+        ),
+    );
+    app.add_systems(Update, (slowmo_on_lap_completion, update_score));
     app.run();
 }
 
@@ -49,4 +62,49 @@ fn slowmo_on_lap_completion(
             *slowmo_timer = None;
         }
     }
+}
+
+fn spawn_cars(mut commands: Commands) {
+    commands
+        .spawn(CarBundle::default())
+        .insert((CarName("Car 1".to_string()), Score::new(0)));
+    commands
+        .spawn(CarBundle::default())
+        .insert((CarName("Car 2".to_string()), Score::new(0)));
+    commands
+        .spawn(CarBundle::default())
+        .insert((CarName("Car 3".to_string()), Score::new(0)));
+}
+
+#[derive(Resource)]
+pub struct ScoreTimer {
+    timer: Timer,
+}
+
+fn insert_timer(mut commands: Commands) {
+    commands.insert_resource(ScoreTimer {
+        timer: Timer::new(Duration::from_secs(3), TimerMode::Repeating),
+    })
+}
+
+fn update_score(
+    mut query: Query<(&mut Score, &CarName)>,
+    time: Res<Time>,
+    mut timer: ResMut<ScoreTimer>,
+) {
+    timer.timer.tick(time.delta());
+
+    if timer.timer.finished() {
+        for (mut score, car_name) in &mut query {
+            if car_name.0 == "Car 2" {
+                **score += 1;
+                println!("Increment car 2 score");
+                println!("Car 2 score - {}", score.get());
+            }
+        }
+    }
+}
+
+fn spawn_scoreboard(mut commands: Commands) {
+    commands.spawn((SpatialBundle::default(), Scoreboard));
 }

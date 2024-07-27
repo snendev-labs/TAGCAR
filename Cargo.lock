@@ -3851,8 +3851,11 @@ dependencies = [
  "avian2d",
  "bevy",
  "bevy_reactive_blueprints",
+ "car",
+ "laptag",
  "resurfacer",
  "scoreboard",
+ "sickle_ui",
  "simple-easing",
  "track",
 ]
