@@ -40,14 +40,28 @@ impl TrackPlugin {
     ) {
         for (entity, track) in &tracks {
             let mut checkpoints = vec![];
-            for (index, (position, angle)) in track.checkpoints().enumerate() {
-                let entity = commands
-                    .spawn(Checkpoint::bundle(index, position, angle, track.thickness))
+            let mut walls = vec![];
+            let mut chunks = track.chunks().collect::<Vec<_>>();
+            for (index, chunk) in chunks.iter().enumerate() {
+                let checkpoint = commands
+                    .spawn(Checkpoint::from_chunk(track, chunk.clone(), index).bundle())
                     .id();
-                checkpoints.push(entity);
+                checkpoints.push(checkpoint);
+            }
+            // complete the ring by adding the first element to the end
+            chunks.push(chunks.get(0).unwrap().clone());
+            // iterate through all edges in the ring
+            for chunk_pair in chunks.windows(2) {
+                let chunk1 = &chunk_pair[0];
+                let chunk2 = &chunk_pair[1];
+                let wall = commands
+                    .spawn(Wall::between_chunks(track, chunk1.clone(), chunk2.clone()).bundle())
+                    .id();
+                walls.push(wall);
             }
 
             commands.entity(entity).insert(Checkpoints(checkpoints));
+            commands.entity(entity).insert(Walls(walls));
         }
     }
 
@@ -139,33 +153,25 @@ impl Track {
         self.thickness
     }
 
-    pub fn checkpoints(&self) -> impl Iterator<Item = (Vec2, f32)> + Clone + '_ {
-        // we want to go from
-        //    ---------
-        //   /
-        //  /
-        //  \
-        //   \
-        //    ---------
-        // so we iterate through the "sides" of the track
-        // and flat_map each chunk's subdivisions
-        // etc
+    pub fn interior_radius(&self) -> f32 {
+        self.radius - self.thickness
+    }
 
-        // TrackChunk::Top
-        let y = self.radius;
+    pub fn chunks(&self) -> impl Iterator<Item = TrackChunk> + '_ {
+        // iterate through the "sides" of the track and flat_map to a list of subdivisions
         let x = self.half_length - self.radius;
         let separation = x * 2. / self.subdivisions_per_chunk as f32;
         let top_chunk_range = (0..=self.subdivisions_per_chunk).map(move |index| {
-            (
-                Vec2::new(x - index as f32 * separation, y - self.thickness / 2.),
-                0.,
+            TrackChunk::new(
+                Vec2::new(x - index as f32 * separation, 0.),
+                std::f32::consts::FRAC_PI_2,
             )
         });
 
         let bottom_chunk_range = (0..=self.subdivisions_per_chunk).rev().map(move |index| {
-            (
-                Vec2::new(x - index as f32 * separation, -y + self.thickness / 2.),
-                0.,
+            TrackChunk::new(
+                Vec2::new(x - index as f32 * separation, 0.),
+                -std::f32::consts::FRAC_PI_2,
             )
         });
 
@@ -173,26 +179,34 @@ impl Track {
         // x = r * cos(theta), y = r * sin(theta)
         // on left side, theta in range (pi/2, 3pi/2)
         // I don't know why this center works
-        let track_center = (self.radius + self.thickness / 3.) / 2.;
         let left_chunk_range = (1..self.subdivisions_per_chunk).map(move |index| {
             let theta = FRAC_PI_2 + PI * index as f32 / self.subdivisions_per_chunk as f32;
-            (
-                Vec2::new(-x + track_center * theta.cos(), track_center * theta.sin()),
-                theta - FRAC_PI_2,
-            )
+            TrackChunk::new(Vec2::new(-x, 0.), theta)
         });
         // on right side, theta in range (-pi/2, pi/2)
         let right_chunk_range = (1..self.subdivisions_per_chunk).map(move |index| {
             let theta = -FRAC_PI_2 + PI * index as f32 / self.subdivisions_per_chunk as f32;
-            (
-                Vec2::new(x + track_center * theta.cos(), track_center * theta.sin()),
-                theta - FRAC_PI_2,
-            )
+            TrackChunk::new(Vec2::new(x, 0.), theta)
         });
         top_chunk_range
             .chain(left_chunk_range)
             .chain(bottom_chunk_range)
             .chain(right_chunk_range)
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct TrackChunk {
+    chunk_origin: Vec2,
+    chunk_border_angle: f32,
+}
+
+impl TrackChunk {
+    pub fn new(chunk_origin: Vec2, chunk_border_angle: f32) -> Self {
+        Self {
+            chunk_origin,
+            chunk_border_angle,
+        }
     }
 }
 
@@ -207,7 +221,7 @@ impl TrackInterior {
     const Z_INDEX: f32 = 5.;
 
     pub fn from_track(track: &Track) -> Self {
-        let radius = track.radius - track.thickness;
+        let radius = track.interior_radius();
         let half_length = track.half_length;
         Self {
             radius,
@@ -244,28 +258,33 @@ impl Checkpoint {
     const WIDTH: f32 = 4.;
     const Z_INDEX: f32 = 10.;
 
-    pub fn transform(position: Vec2, angle: f32) -> Transform {
-        Transform::from_translation(Vec3::new(position.x, position.y, Self::Z_INDEX))
-            .with_rotation(Quat::from_rotation_z(angle))
+    pub fn from_chunk(track: &Track, chunk: TrackChunk, index: usize) -> Self {
+        let size = Vec2::new(track.thickness, Self::WIDTH);
+        let track_center_offset = track.radius() / 2. + track.interior_radius() / 2.;
+
+        Checkpoint {
+            index,
+            size,
+            position: chunk.chunk_origin
+                + Vec2::from_angle(chunk.chunk_border_angle) * track_center_offset,
+            angle: chunk.chunk_border_angle,
+        }
     }
 
-    pub fn bundle(index: usize, position: Vec2, angle: f32, thickness: f32) -> impl Bundle {
-        let x = Self::WIDTH;
-        let y = thickness * 1.1;
-        let checkpoint = Checkpoint {
-            index,
-            size: Vec2::new(x, y),
-            position,
-            angle,
-        };
+    pub fn transform(&self) -> Transform {
+        Transform::from_translation(Vec3::new(self.position.x, self.position.y, Self::Z_INDEX))
+            .with_rotation(Quat::from_rotation_z(self.angle))
+    }
+
+    pub fn bundle(self) -> impl Bundle {
         (
-            Blueprint::new(checkpoint.clone()),
-            checkpoint,
-            Name::new(format!("Checkpoint {index}")),
+            Blueprint::new(self.clone()),
+            Name::new(format!("Checkpoint {}", self.index)),
             RigidBody::Static,
-            Collider::rectangle(x, y),
+            Collider::rectangle(self.size.x, self.size.y),
             Sensor,
-            SpatialBundle::from_transform(Self::transform(position, angle)),
+            SpatialBundle::from_transform(self.transform()),
+            self,
         )
     }
 }
@@ -310,6 +329,53 @@ impl CheckpointTracker {
 pub struct LapComplete {
     pub racer: Entity,
 }
+
+#[derive(Clone, Debug, Default)]
+#[derive(Component, Reflect)]
+pub struct Wall {
+    pub size: Vec2,
+    pub position: Vec2,
+    pub angle: f32,
+}
+
+impl Wall {
+    const Z_INDEX: f32 = 10.;
+    const THICKNESS: f32 = 10.;
+
+    pub fn between_chunks(track: &Track, chunk1: TrackChunk, chunk2: TrackChunk) -> Self {
+        let vertex1 =
+            chunk1.chunk_origin + Vec2::from_angle(chunk1.chunk_border_angle) * track.radius();
+        let vertex2 =
+            chunk2.chunk_origin + Vec2::from_angle(chunk2.chunk_border_angle) * track.radius();
+        let size = Vec2::new(vertex1.distance(vertex2) + 0.2, Self::THICKNESS);
+        Wall {
+            size,
+            position: (vertex1 + vertex2) / 2.,
+            angle: (chunk1.chunk_border_angle + chunk2.chunk_border_angle + std::f32::consts::PI)
+                / 2.,
+        }
+    }
+
+    pub fn transform(&self) -> Transform {
+        Transform::from_translation(Vec3::new(self.position.x, self.position.y, Self::Z_INDEX))
+            .with_rotation(Quat::from_rotation_z(self.angle))
+    }
+
+    pub fn bundle(self) -> impl Bundle {
+        (
+            Blueprint::new(self.clone()),
+            Name::new("Wall"),
+            RigidBody::Static,
+            Collider::rectangle(self.size.x, self.size.y),
+            SpatialBundle::from_transform(self.transform()),
+            self,
+        )
+    }
+}
+
+#[derive(Debug)]
+#[derive(Component, Reflect)]
+pub struct Walls(Vec<Entity>);
 
 #[cfg(test)]
 mod tests {
@@ -359,15 +425,15 @@ mod tests {
     fn test_lap_completion() {
         let (mut app, tracker, track, _) = test_app();
 
-        let track = app.world_mut().get::<Track>(track).unwrap();
-        for (index, (position, angle)) in track.clone().checkpoints().enumerate() {
+        let track = app.world_mut().get::<Track>(track).unwrap().clone();
+        for (index, chunk) in track.clone().chunks().enumerate() {
             let events = app.world_mut().resource::<Events<LapComplete>>();
             let mut reader = events.get_reader();
             assert!(reader.read(events).find(|lap| ***lap == tracker).is_none());
             let reached_checkpoints = app.world_mut().get::<CheckpointTracker>(tracker).unwrap();
             assert_eq!(reached_checkpoints.len(), index);
             let mut transform = app.world_mut().get_mut::<Transform>(tracker).unwrap();
-            *transform = Checkpoint::transform(position, angle);
+            *transform = Checkpoint::from_chunk(&track, chunk, index).transform();
             app.update();
             app.update();
         }

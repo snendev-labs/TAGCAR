@@ -70,15 +70,18 @@ impl ResurfacerPlugin {
             let (mut velocity, mut transform, resurfacer) = resurfacers
                 .get_mut(**resurfacer)
                 .expect("TrackResurfacer to be a valid Resurfacer entity");
-            let checkpoints = track.checkpoints().collect::<Vec<_>>();
-            let (next_checkpoint, _) = checkpoints
-                .get(resurfacer.last_checkpoint_index + 1)
-                .unwrap_or(checkpoints.get(0).expect("Track to have checkpoints"));
-            **velocity =
-                Resurfacer::SPEED * (*next_checkpoint - transform.translation.xy()).normalize();
+            let chunks = track.chunks().collect::<Vec<_>>();
+            let index = resurfacer.last_checkpoint_index + 1;
+            let next_chunk = chunks
+                .get(index)
+                .unwrap_or(chunks.get(0).expect("Track to have chunks"));
+            let next_checkpoint_position =
+                Checkpoint::from_chunk(track, next_chunk.clone(), index).position;
+            **velocity = Resurfacer::SPEED
+                * (next_checkpoint_position - transform.translation.xy()).normalize();
             let target = Vec3::new(
-                next_checkpoint.x,
-                next_checkpoint.y,
+                next_checkpoint_position.x,
+                next_checkpoint_position.y,
                 transform.translation.z,
             );
             // TODO: not working?
@@ -134,12 +137,19 @@ impl ResurfacerPlugin {
     ) {
         for (track_entity, track) in &tracks {
             let resurfacer = Resurfacer::default();
-            let (position, angle) = std::iter::repeat(track.checkpoints())
-                .flat_map(|iter| iter)
+            let chunk = std::iter::repeat(track)
+                .flat_map(|track| {
+                    track
+                        .chunks()
+                        .enumerate()
+                        .map(|(index, chunk)| Checkpoint::from_chunk(track, chunk, index))
+                })
                 .skip(resurfacer.last_checkpoint_index)
                 .next()
                 .expect("Checkpoints iter to be a ring");
-            let resurfacer = commands.spawn(resurfacer.bundle(position, angle)).id();
+            let resurfacer = commands
+                .spawn(resurfacer.bundle(chunk.position, chunk.angle))
+                .id();
             commands
                 .entity(track_entity)
                 .insert(TrackResurfacer(resurfacer));
