@@ -172,6 +172,7 @@ impl Resurfacer {
         (
             Blueprint::new(self.clone()),
             self,
+            Name::new("Resurfacer"),
             CheckpointTracker::default(),
             Entropy::default(),
             RigidBody::Kinematic,
@@ -208,6 +209,7 @@ impl Obstacle {
         (
             Blueprint::new(self.clone()),
             self,
+            Name::new(format!("Obstacle: {self:?}")),
             SpatialBundle::from_transform(Transform::from_xyz(
                 position.x,
                 position.y,
@@ -239,13 +241,15 @@ impl CheckpointObstacles {
 mod tests {
     use std::time::Duration;
 
-    use super::*;
     use avian2d::{
         prelude::{Physics, PhysicsTime, TimestepMode},
         PhysicsPlugins,
     };
     use bevy::{ecs::system::RunSystemOnce, scene::ScenePlugin};
+
     use track::{TrackInterior, TrackPlugin};
+
+    use super::*;
 
     fn test_app() -> (App, Entity, Entity, Entity) {
         let mut app = App::new();

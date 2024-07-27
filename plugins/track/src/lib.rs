@@ -99,7 +99,7 @@ pub struct Track {
 
 impl Default for Track {
     fn default() -> Self {
-        Self::new(600., 300., 220., 10)
+        Self::new(800., 400., 320., 10)
     }
 }
 
@@ -122,6 +122,7 @@ impl Track {
             SpatialBundle::from_transform(Transform::from_rotation(Quat::from_rotation_z(
                 FRAC_PI_2,
             ))),
+            Name::new(format!("Track")),
             self,
         )
     }
@@ -217,6 +218,7 @@ impl TrackInterior {
     pub fn bundle(self) -> impl Bundle {
         (
             Blueprint::new(self.clone()),
+            Name::new(format!("Track interior")),
             RigidBody::Static,
             Collider::capsule(self.radius, self.half_length),
             Sensor,
@@ -259,6 +261,7 @@ impl Checkpoint {
         (
             Blueprint::new(checkpoint.clone()),
             checkpoint,
+            Name::new(format!("Checkpoint {index}")),
             RigidBody::Static,
             Collider::rectangle(x, y),
             Sensor,
@@ -312,12 +315,13 @@ pub struct LapComplete {
 mod tests {
     use std::time::Duration;
 
-    use super::*;
     use avian2d::{
         prelude::{Physics, PhysicsTime, TimestepMode},
         PhysicsPlugins,
     };
     use bevy::{ecs::system::RunSystemOnce, scene::ScenePlugin};
+
+    use super::*;
 
     fn test_app() -> (App, Entity, Entity, Entity) {
         let mut app = App::new();

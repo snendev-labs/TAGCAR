@@ -3,7 +3,11 @@ name = "car"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+default = []
+graphics = ["bevy/bevy_sprite"]
+
 [dependencies]
-bevy = { workspace = true, features = ["bevy_pbr"] }
+bevy = { workspace = true }
 bevy_reactive_blueprints = { workspace = true }
 avian2d = { workspace = true }

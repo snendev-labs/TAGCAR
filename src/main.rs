@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 
+use car::CarBlueprint;
 use track::{Track, TrackInterior};
 
 use tagcar::TagcarPlugins;
@@ -8,9 +9,7 @@ fn main() {
     let mut app = App::new();
     app.add_plugins(DefaultPlugins);
     app.add_plugins(TagcarPlugins);
-    #[cfg(feature = "debug")]
-    app.add_plugins(avian2d::prelude::PhysicsDebugPlugin::default());
-    app.add_systems(Startup, (spawn_camera, spawn_track));
+    app.add_systems(Startup, (spawn_camera, spawn_game));
     app.run();
 }
 
@@ -18,8 +17,13 @@ fn spawn_camera(mut commands: Commands) {
     commands.spawn(Camera2dBundle::default());
 }
 
-fn spawn_track(mut commands: Commands) {
+fn spawn_game(mut commands: Commands) {
     let track = Track::default();
+    let (start_line_center, angle) = track.checkpoints().next().unwrap();
+    commands.spawn(CarBlueprint::new(
+        start_line_center,
+        angle + std::f32::consts::PI,
+    ));
     let interior = TrackInterior::from_track(&track);
     commands.spawn(interior.bundle());
     commands.spawn(track.bundle());
