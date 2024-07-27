@@ -10,6 +10,7 @@ fn main() {
     app.add_plugins(DefaultPlugins);
     app.add_plugins(TagcarPlugins);
     app.add_systems(Startup, (spawn_camera, spawn_game));
+
     app.run();
 }
 

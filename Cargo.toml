@@ -5,9 +5,11 @@ resolver = "2"
 [workspace.dependencies]
 # plugins
 car = { path = "plugins/car" }
+laptag = { path = "plugins/laptag" }
 controller = { path = "plugins/controller" }
 track = { path = "plugins/track" }
 resurfacer = { path = "plugins/resurfacer" }
+scoreboard = { path = "plugins/scoreboard" }
 slowmo = { path = "plugins/slowmo" }
 
 # bevy
@@ -42,6 +44,8 @@ car = { workspace = true, features = ["graphics"] }
 controller = { workspace = true }
 resurfacer = { workspace = true, features = ["graphics"] }
 track = { workspace = true, features = ["graphics"] }
+laptag = { workspace = true }
+scoreboard = { workspace = true }
 slowmo = { workspace = true }
 
 # bevy

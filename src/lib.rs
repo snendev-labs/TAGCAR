@@ -22,6 +22,7 @@ impl PluginGroup for TagcarPlugins {
             .add(controller::CarControllerPlugin)
             .add(track::TrackPlugin)
             .add(resurfacer::ResurfacerPlugin)
+            .add(scoreboard::ScoreboardPlugin)
             .add(SlowmoPlugin)
     }
 }
