@@ -6,7 +6,7 @@ use car::{Car, CarBlueprint};
 use controller::Controller;
 use entropy::{ForkableRng, GlobalEntropy, RngCore, WyRand};
 use laptag::{BombTagIt, CanBeIt, LapTagIt};
-use track::{Track, TrackInterior};
+use track::{CheckpointHighlightTracker, Track, TrackInterior};
 
 use tagcar::TagcarPlugins;
 
@@ -39,6 +39,7 @@ fn spawn_game(mut commands: Commands, mut entropy: ResMut<GlobalEntropy<WyRand>>
                 builder.insert((
                     Controller::ArrowKeys,
                     CameraTracker::rect(-bounds_max, bounds_max),
+                    CheckpointHighlightTracker,
                 ));
             }
             1 => {
