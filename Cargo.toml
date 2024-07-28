@@ -4,8 +4,13 @@ resolver = "2"
 
 [workspace.dependencies]
 # plugins
+audio_fx = { path = "plugins/audio-fx" }
+bg_music = { path = "plugins/bg-music" }
+bot_controller = { path = "plugins/bot-controller" }
+camera = { path = "plugins/camera" }
 car = { path = "plugins/car" }
 controller = { path = "plugins/controller" }
+entropy = { path = "plugins/entropy" }
 laptag = { path = "plugins/laptag" }
 resurfacer = { path = "plugins/resurfacer" }
 scoreboard = { path = "plugins/scoreboard" }
@@ -16,6 +21,9 @@ track = { path = "plugins/track" }
 avian2d = { version = "0.1" }
 bevy = { version = "0.14", default-features = false }
 bevy_anyhow_alert = "0.3"
+bevy_asset_loader = { version = "0.21", features = ["2d"] }
+bevy_dolly = { version = "0.0.4" }
+bevy_kira_audio = { version = "0.20.0", features = ["mp3", "wav"] }
 bevy-inspector-egui = "0.25"
 bevy_prng = { version = "0.7", features = ["wyrand"] }
 bevy_rand = { version = "0.7", features = ["wyrand"] }
@@ -36,22 +44,57 @@ version = "0.1.0"
 edition = "2021"
 
 [features]
-default = ["debug"]
+default = ["audio"]
+audio = ["dep:audio_fx", "dep:bg_music", "dep:bevy_kira_audio"]
 debug = ["dep:bevy-inspector-egui", "avian2d/debug-plugin"]
 
 [dependencies]
 # plugins
+bot_controller = { workspace = true }
+camera = { workspace = true }
 car = { workspace = true, features = ["graphics"] }
 controller = { workspace = true }
-laptag = { workspace = true, features = ["graphics"] }
+entropy = { workspace = true }
 resurfacer = { workspace = true, features = ["graphics"] }
+laptag = { workspace = true }
 scoreboard = { workspace = true }
 slowmo = { workspace = true }
 track = { workspace = true, features = ["graphics"] }
+audio_fx = { workspace = true, optional = true }
+bg_music = { workspace = true, optional = true }
 
 # bevy
 avian2d = { workspace = true }
-bevy = { workspace = true, default-features = true }
+bevy = { workspace = true, features = [
+    # default-features excluding audio, vorbis
+    "animation",
+    "bevy_asset",
+    "bevy_state",
+    "bevy_color",
+    "bevy_gilrs",
+    "bevy_scene",
+    "bevy_winit",
+    "bevy_core_pipeline",
+    "bevy_pbr",
+    "bevy_gltf",
+    "bevy_render",
+    "bevy_sprite",
+    "bevy_text",
+    "bevy_ui",
+    "multi_threaded",
+    "png",
+    "hdr",
+    "x11",
+    "bevy_gizmos",
+    "android_shared_stdcxx",
+    "tonemapping_luts",
+    "smaa_luts",
+    "default_font",
+    "webgl2",
+    "sysinfo_plugin",
+] }
+bevy_asset_loader = { workspace = true }
+bevy_kira_audio = { workspace = true, optional = true }
 bevy_reactive_blueprints = { workspace = true }
 bevy-inspector-egui = { workspace = true, optional = true }
 

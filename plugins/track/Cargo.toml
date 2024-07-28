@@ -13,4 +13,31 @@ bevy = { workspace = true }
 bevy_reactive_blueprints = { workspace = true }
 
 [dev-dependencies]
-bevy = { workspace = true, default-features = true }
+bevy = { workspace = true, features = [
+    # default-features excluding audio, vorbis
+    "animation",
+    "bevy_asset",
+    "bevy_state",
+    "bevy_color",
+    "bevy_gilrs",
+    "bevy_scene",
+    "bevy_winit",
+    "bevy_core_pipeline",
+    "bevy_pbr",
+    "bevy_gltf",
+    "bevy_render",
+    "bevy_sprite",
+    "bevy_text",
+    "bevy_ui",
+    "multi_threaded",
+    "png",
+    "hdr",
+    "x11",
+    "bevy_gizmos",
+    "android_shared_stdcxx",
+    "tonemapping_luts",
+    "smaa_luts",
+    "default_font",
+    "webgl2",
+    "sysinfo_plugin",
+] }

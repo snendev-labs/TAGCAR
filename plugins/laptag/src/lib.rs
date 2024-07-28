@@ -1,8 +1,10 @@
-use std::marker::PhantomData;
+use std::{marker::PhantomData, time::Duration};
 
-use avian2d::prelude::CollisionStarted;
-use bevy::prelude::*;
-use bevy::{app::PluginGroupBuilder, ecs::system::EntityCommand, reflect::GetTypeRegistration};
+use avian2d::prelude::{CollisionStarted, Physics};
+use bevy::{
+    app::PluginGroupBuilder, ecs::system::EntityCommand, prelude::*, reflect::GetTypeRegistration,
+    utils::EntityHashSet,
+};
 
 use track::{CheckpointTracker, LapComplete};
 
@@ -29,46 +31,106 @@ impl PluginGroup for LapTagPlugins {
         #[cfg(feature = "graphics")]
         let builder = builder.add(ParticlesPlugin);
         builder
-            .add(LapTagPlugin::<ScoreTagIt>::default())
-            .add(LapTagPlugin::<BombTagIt>::default())
+            .add(TagPlugin::<LapTagIt>::default())
+            .add(TagPlugin::<BombTagIt>::default())
     }
 }
 
-#[derive(Default)]
-pub struct LapTagPlugin<Tag> {
-    marker: PhantomData<Tag>,
-}
+pub struct LapsPlugin;
 
-impl<Tag> Plugin for LapTagPlugin<Tag>
-where
-    Tag: Component + Default + GetTypeRegistration + TagIt + Send + Sync + 'static,
-{
+impl Plugin for LapsPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
             Update,
-            (
-                Self::transfer_tag,
-                Self::reset_lap_on_tag,
-                Self::complete_laps,
-            )
+            (Self::tick_immunity, Self::handle_tags)
                 .chain()
                 .in_set(LapTagSystems),
         );
         app.register_type::<Score>()
-            .register_type::<Tag>()
+            .register_type::<TagImmunity>()
             .register_type::<CanBeIt>();
     }
 }
 
-impl<Tag> LapTagPlugin<Tag>
+impl LapsPlugin {
+    fn handle_tags(
+        mut commands: Commands,
+        mut lap_trackers: Query<&mut CheckpointTracker>,
+        new_tag_its: Query<Entity, Or<(Added<LapTagIt>, Added<BombTagIt>)>>,
+        mut removed_lap_tag_its: RemovedComponents<LapTagIt>,
+        mut removed_bomb_tag_its: RemovedComponents<BombTagIt>,
+    ) {
+        // start by assuming we will remove all entities that lost tags
+        let mut entities_to_remove = removed_lap_tag_its
+            .read()
+            .chain(removed_bomb_tag_its.read())
+            .collect::<EntityHashSet<_>>();
+
+        for entity in &new_tag_its {
+            // if an entity was going to lose a tag, don't do that anymore
+            // it will be handled here instead
+            entities_to_remove.remove(&entity);
+            // also attach some immunity
+            commands.entity(entity).insert(TagImmunity::default());
+            // now clear or insert a new tracker
+            if let Ok(mut tracker) = lap_trackers.get_mut(entity) {
+                tracker.clear();
+            } else {
+                commands.entity(entity).insert(CheckpointTracker::default());
+            }
+        }
+
+        // now cleanup the remaining entities to remove
+        for entity in entities_to_remove {
+            if lap_trackers.contains(entity) {
+                commands.entity(entity).remove::<CheckpointTracker>();
+            }
+        }
+    }
+
+    fn tick_immunity(
+        mut commands: Commands,
+        mut timers: Query<(Entity, &mut TagImmunity)>,
+        time: Res<Time<Physics>>,
+    ) {
+        for (entity, mut timer) in &mut timers {
+            if timer.tick(time.delta()) {
+                commands.entity(entity).remove::<TagImmunity>();
+            }
+        }
+    }
+}
+
+#[derive(Default)]
+pub struct TagPlugin<Tag> {
+    marker: PhantomData<Tag>,
+}
+
+impl<Tag> Plugin for TagPlugin<Tag>
+where
+    Tag: Component + Default + GetTypeRegistration + TagIt + Send + Sync + 'static,
+{
+    fn build(&self, app: &mut App) {
+        app.add_event::<TagEvent>().add_systems(
+            Update,
+            (Self::transfer_tag, Self::complete_laps)
+                .chain()
+                .in_set(LapTagSystems),
+        );
+        app.register_type::<Tag>();
+    }
+}
+
+impl<Tag> TagPlugin<Tag>
 where
     Tag: TagIt + Component,
 {
     fn transfer_tag(
         mut commands: Commands,
         mut collisions: EventReader<CollisionStarted>,
-        tag_its: Query<Entity, With<Tag>>,
+        tag_its: Query<Entity, (With<Tag>, Without<TagImmunity>)>,
         can_be_its: Query<Entity, (With<CanBeIt>, Without<Tag>)>,
+        mut tags: EventWriter<TagEvent>,
     ) where
         Tag: Default,
     {
@@ -87,19 +149,10 @@ where
             };
             commands.entity(it_entity).remove::<Tag>();
             commands.entity(tagged_entity).insert(Tag::default());
-        }
-    }
-
-    fn reset_lap_on_tag(
-        mut lap_trackers: Query<&mut CheckpointTracker>,
-        new_tag_its: Query<Entity, Added<Tag>>,
-        mut removed_tag_its: RemovedComponents<Tag>,
-    ) {
-        for entity in new_tag_its.iter().chain(removed_tag_its.read()) {
-            let Ok(mut tracker) = lap_trackers.get_mut(entity) else {
-                continue;
-            };
-            tracker.clear();
+            tags.send(TagEvent {
+                prev_it: it_entity,
+                next_it: tagged_entity,
+            });
         }
     }
 
@@ -122,25 +175,36 @@ where
 #[derive(SystemSet)]
 pub struct LapTagSystems;
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Default)]
 #[derive(Component, Deref, DerefMut, Reflect)]
 pub struct Score(u32);
-
-impl Score {
-    pub fn new(num: u32) -> Self {
-        Score(num)
-    }
-}
 
 #[derive(Clone, Copy, Debug)]
 #[derive(Component, Reflect)]
 pub struct CanBeIt;
 
+#[derive(Clone, Copy, Debug)]
+#[derive(Component, Deref, Reflect)]
+pub struct TagImmunity(Duration);
+
+impl Default for TagImmunity {
+    fn default() -> Self {
+        Self(Duration::from_secs(2))
+    }
+}
+
+impl TagImmunity {
+    fn tick(&mut self, delta: Duration) -> bool {
+        self.0 = self.0.saturating_sub(delta);
+        self.0.is_zero()
+    }
+}
+
 #[derive(Clone, Copy, Debug, Default)]
 #[derive(Component, Reflect)]
-pub struct ScoreTagIt;
+pub struct LapTagIt;
 
-impl TagIt for ScoreTagIt {
+impl TagIt for LapTagIt {
     #[cfg(feature = "graphics")]
     type EffectContext = Entity;
 
@@ -171,4 +235,11 @@ impl TagIt for BombTagIt {
     }
 
     fn spawn_effects(context: Self::EffectContext) -> impl bevy::ecs::world::Command {}
+}
+
+#[derive(Clone, Copy, Debug)]
+#[derive(Event, Reflect)]
+pub struct TagEvent {
+    pub prev_it: Entity,
+    pub next_it: Entity,
 }
