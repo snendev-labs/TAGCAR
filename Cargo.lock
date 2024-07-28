@@ -4652,6 +4652,7 @@ version = "0.1.0"
 dependencies = [
  "avian2d",
  "bevy",
+ "bevy_asset_loader",
  "bevy_reactive_blueprints",
 ]
 
