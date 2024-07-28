@@ -6,7 +6,7 @@ use bot_controller::BotController;
 use camera::CameraTracker;
 use car::{Car, CarBlueprint};
 use controller::Controller;
-use entropy::{ForkableRng, GlobalEntropy, RngCore, WyRand};
+use entropy::{ForkableRng, GlobalEntropy, RngCore};
 use laptag::{BombTagIt, CanBeIt, LapTagIt, Score};
 use track::{CheckpointHighlightTracker, Track, TrackInterior};
 
@@ -28,7 +28,7 @@ fn main() {
     app.run();
 }
 
-fn spawn_game(mut commands: Commands, mut entropy: ResMut<GlobalEntropy<WyRand>>) {
+fn spawn_game(mut commands: Commands, mut entropy: ResMut<GlobalEntropy>) {
     let track = Track::default();
     let first_chunk = track.chunks().next().unwrap();
     let bounds_max = Vec2::new(track.half_length() - 300., track.radius() - 200.);
@@ -54,7 +54,6 @@ fn spawn_game(mut commands: Commands, mut entropy: ResMut<GlobalEntropy<WyRand>>
                     Controller::ArrowKeys,
                     CameraTracker::rect(-bounds_max, bounds_max),
                     CheckpointHighlightTracker,
-                    LapTagIt,
                 ));
             }
             1 => {

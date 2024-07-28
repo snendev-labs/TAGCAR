@@ -1,8 +1,10 @@
 use bevy::prelude::*;
-use bevy_rand::prelude::EntropyPlugin as RandEntropyPlugin;
+use bevy_prng::WyRand;
+use bevy_rand::prelude::{EntropyPlugin as RandEntropyPlugin, *};
 
-pub use bevy_prng::WyRand;
-pub use bevy_rand::prelude::*;
+pub use bevy_prng;
+pub use bevy_rand;
+pub use bevy_rand::prelude::ForkableRng;
 pub use rand_core::RngCore;
 
 pub struct EntropyPlugin;
@@ -14,6 +16,7 @@ impl Plugin for EntropyPlugin {
 }
 
 pub type Entropy = EntropyComponent<WyRand>;
+pub type GlobalEntropy = bevy_rand::prelude::GlobalEntropy<WyRand>;
 
 #[derive(Clone, Debug, Default)]
 #[derive(Component, Reflect)]
@@ -22,7 +25,7 @@ pub struct EntropyBundle {
 }
 
 impl EntropyBundle {
-    pub fn new(global: &mut GlobalEntropy<WyRand>) -> Self {
+    pub fn new(global: &mut GlobalEntropy) -> Self {
         Self {
             entropy: global.fork_rng(),
         }

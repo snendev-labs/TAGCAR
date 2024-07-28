@@ -27,7 +27,7 @@ impl Plugin for GameCameraPlugin {
 }
 
 impl GameCameraPlugin {
-    fn spawn_camera(mut commands: Commands, mut entropy: ResMut<GlobalEntropy<WyRand>>) {
+    fn spawn_camera(mut commands: Commands, mut entropy: ResMut<GlobalEntropy>) {
         commands.spawn((
             GameCamera,
             Rig::builder()
@@ -59,7 +59,6 @@ impl GameCameraPlugin {
         let camera_driver = rig.driver_mut::<Position>();
         let shake =
             Vec3::new(entropy.next_u32() as f32, entropy.next_u32() as f32, 0.).normalize_or_zero();
-        info!("{shake}");
         camera_driver.translate(shake * 100.);
     }
 }

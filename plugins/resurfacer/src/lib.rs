@@ -3,7 +3,7 @@ use bevy_reactive_blueprints::Blueprint;
 use avian2d::prelude::{Collider, LinearVelocity, RigidBody, Sensor};
 use bevy::prelude::*;
 
-use entropy::{Entropy, RngCore};
+use entropy::{Entropy, ForkableRng, GlobalEntropy, RngCore};
 use track::{Checkpoint, CheckpointTracker, Track, TrackInterior, Wall};
 
 #[cfg(feature = "graphics")]
@@ -127,7 +127,6 @@ impl ResurfacerPlugin {
                     let checkpoint_width_position = (rand_decimal - 0.5) * checkpoint.size.x * 0.9;
                     let spawn_position = checkpoint.position
                         + Vec2::from_angle(checkpoint.angle) * checkpoint_width_position;
-                    collider_positions.push(spawn_position);
 
                     // don't spawn if you collide with something else meaningful
                     if collider_positions
@@ -136,6 +135,7 @@ impl ResurfacerPlugin {
                     {
                         continue;
                     }
+                    collider_positions.push(spawn_position);
                     let obstacle = commands
                         .spawn((Obstacle::Peg, Peg.bundle(spawn_position)))
                         .id();
@@ -160,6 +160,7 @@ impl ResurfacerPlugin {
 
     fn spawn_resurfacer(
         mut commands: Commands,
+        mut entropy: ResMut<GlobalEntropy>,
         tracks: Query<(Entity, &Track), Without<TrackResurfacer>>,
     ) {
         for (track_entity, track) in &tracks {
@@ -175,7 +176,10 @@ impl ResurfacerPlugin {
                 .next()
                 .expect("Checkpoints iter to be a ring");
             let resurfacer = commands
-                .spawn(resurfacer.bundle(chunk.position, chunk.angle))
+                .spawn((
+                    resurfacer.bundle(chunk.position, chunk.angle),
+                    entropy.fork_rng(),
+                ))
                 .id();
             commands
                 .entity(track_entity)
@@ -211,7 +215,6 @@ impl Resurfacer {
             self,
             Name::new("Resurfacer"),
             CheckpointTracker::default(),
-            Entropy::default(),
             RigidBody::Kinematic,
             Collider::rectangle(Self::WIDTH, Self::WIDTH),
             Sensor,
