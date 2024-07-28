@@ -6,7 +6,11 @@ impl Plugin for ParticlesPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
             Update,
-            (attach_sprites::<ConfettiEffect>, animate_particle_sprites).in_set(ParticleSystems),
+            (
+                Self::attach_sprites::<ConfettiEffect>,
+                Self::animate_particle_sprites,
+            )
+                .in_set(ParticleSystems),
         );
     }
 }
@@ -41,10 +45,9 @@ impl ParticlesPlugin {
         texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
         query: Query<Entity, With<T>>,
     ) {
+        let sprite = T::generate_sprite(asset_server, texture_atlas_layouts);
         for effect_entity in &query {
-            let sprite_entity = commands
-                .spawn(T::generate_sprite(asset_server, texture_atlas_layouts))
-                .id();
+            let sprite_entity = commands.spawn(sprite.clone()).id();
             commands
                 .entity(effect_entity)
                 .remove::<T>()

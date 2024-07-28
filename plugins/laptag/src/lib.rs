@@ -9,7 +9,7 @@ use bevy::{
 use track::{CheckpointTracker, LapComplete};
 
 mod particles;
-use particles::ConfettiEffect;
+use particles::{BombEffect, ConfettiEffect, TagEffect};
 
 #[cfg(feature = "graphics")]
 mod particles;
@@ -221,7 +221,7 @@ impl TagIt for LapTagIt {
 
     fn spawn_effects() -> impl EntityCommand {
         |entity: Entity, world: &mut World| {
-            world.get_mut(entity).insert(ConfettiEffect);
+            world.entity_mut(entity).insert(ConfettiEffect);
         }
     }
 }
