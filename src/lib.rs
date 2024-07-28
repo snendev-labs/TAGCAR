@@ -4,6 +4,7 @@ use avian2d::{prelude::Gravity, PhysicsPlugins};
 use bevy::{app::PluginGroupBuilder, input::common_conditions::input_just_pressed, prelude::*};
 #[cfg(feature = "debug")]
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
+use bevy_kira_audio::AudioPlugin;
 use bevy_reactive_blueprints::BlueprintsPlugin;
 
 use camera::GameCamera;
@@ -22,6 +23,7 @@ impl PluginGroup for TagcarPlugins {
             .add(PhysicsDebugPlugin::default());
         builder
             .add_group(PhysicsPlugins::default())
+            .add(AudioPlugin)
             .add(EntropyPlugin)
             .add(BlueprintsPlugin)
             .add(car::CarPlugin)
@@ -33,6 +35,8 @@ impl PluginGroup for TagcarPlugins {
             .add(slowmo::SlowmoPlugin)
             .add(bot_controller::BotControllerPlugin)
             .add(camera::GameCameraPlugin)
+            .add(bg_music::BgMusicPlugin)
+            .add(audio_fx::AudioFxPlugin)
             .add(IntegrationPlugin)
     }
 }
@@ -45,6 +49,14 @@ impl Plugin for IntegrationPlugin {
         app.configure_sets(
             Update,
             camera::GameCameraSystems::Shake.run_if(event_occurs_on_camera::<TagEvent>),
+        );
+        app.configure_sets(
+            Update,
+            audio_fx::AudioFxSystems::CrashFx.run_if(event_occurs_on_camera::<TagEvent>),
+        );
+        app.configure_sets(
+            Update,
+            audio_fx::AudioFxSystems::ScoreFx.run_if(event_occurs_on_camera::<LapComplete>),
         );
         app.configure_sets(
             Update,

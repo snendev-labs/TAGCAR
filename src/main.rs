@@ -1,11 +1,13 @@
+use audio_fx::AudioFxAssets;
 use bevy::prelude::*;
 
+use bg_music::BgMusicAssets;
 use bot_controller::BotController;
 use camera::CameraTracker;
 use car::{Car, CarBlueprint};
 use controller::Controller;
 use entropy::{ForkableRng, GlobalEntropy, RngCore, WyRand};
-use laptag::{BombTagIt, CanBeIt, LapTagIt};
+use laptag::{BombTagIt, CanBeIt, LapTagIt, Score};
 use track::{CheckpointHighlightTracker, Track, TrackInterior};
 
 use tagcar::TagcarPlugins;
@@ -14,7 +16,15 @@ fn main() {
     let mut app = App::new();
     app.add_plugins(DefaultPlugins);
     app.add_plugins(TagcarPlugins);
-    app.add_systems(Startup, spawn_game);
+    app.add_systems(Startup, spawn_loading_ui);
+    app.add_systems(
+        Update,
+        (spawn_game, despawn_ui).run_if(
+            resource_exists::<BgMusicAssets>
+                .and_then(resource_exists::<AudioFxAssets>)
+                .and_then(run_once()),
+        ),
+    );
     app.run();
 }
 
@@ -33,13 +43,18 @@ fn spawn_game(mut commands: Commands, mut entropy: ResMut<GlobalEntropy<WyRand>>
             (position_index as f32 / CAR_COUNT as f32) * (track.thickness() - Car::WIDTH * 2.);
         let spawn_position = first_chunk.origin()
             + Vec2::from_angle(first_chunk.angle()) * (start_offset + car_index_offset);
-        let mut builder = commands.spawn((CanBeIt, CarBlueprint::new(spawn_position, spawn_angle)));
+        let mut builder = commands.spawn((
+            CanBeIt,
+            Score::default(),
+            CarBlueprint::new(spawn_position, spawn_angle),
+        ));
         match car_index {
             0 => {
                 builder.insert((
                     Controller::ArrowKeys,
                     CameraTracker::rect(-bounds_max, bounds_max),
                     CheckpointHighlightTracker,
+                    LapTagIt,
                 ));
             }
             1 => {
@@ -56,4 +71,41 @@ fn spawn_game(mut commands: Commands, mut entropy: ResMut<GlobalEntropy<WyRand>>
     let interior = TrackInterior::from_track(&track);
     commands.spawn(interior.bundle());
     commands.spawn(track.bundle());
+}
+
+#[derive(Component)]
+struct LoadingUI;
+
+fn spawn_loading_ui(mut commands: Commands) {
+    commands
+        .spawn((
+            Name::new("Loading UI"),
+            LoadingUI,
+            NodeBundle {
+                style: Style {
+                    width: Val::Percent(100.0),
+                    height: Val::Percent(100.0),
+                    justify_content: JustifyContent::Center,
+                    align_items: AlignItems::Center,
+                    ..Default::default()
+                },
+                ..Default::default()
+            },
+        ))
+        .with_children(|builder| {
+            builder.spawn(TextBundle::from_section(
+                "Loading...",
+                TextStyle {
+                    font_size: 128.0,
+                    color: Color::srgb(0.02, 0.02, 0.1),
+                    ..Default::default()
+                },
+            ));
+        });
+}
+
+fn despawn_ui(mut commands: Commands, ui_roots: Query<Entity, With<LoadingUI>>) {
+    for entity in &ui_roots {
+        commands.entity(entity).despawn_recursive();
+    }
 }
