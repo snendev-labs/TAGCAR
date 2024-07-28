@@ -1,13 +1,10 @@
 use bevy_reactive_blueprints::Blueprint;
-use rand_core::RngCore;
 
 use avian2d::prelude::{Collider, LinearVelocity, RigidBody, Sensor};
 use bevy::prelude::*;
 
+use entropy::{Entropy, RngCore};
 use track::{Checkpoint, CheckpointTracker, Track, TrackInterior, Wall};
-
-mod entropy;
-pub use entropy::*;
 
 #[cfg(feature = "graphics")]
 mod graphics;
@@ -333,7 +330,7 @@ mod tests {
 
     #[test]
     fn test_lap_completion() {
-        let (mut app, tracker, track, _) = test_app();
+        let (mut _app, _tracker, _track, _) = test_app();
 
         // let track = app.world_mut().get::<Track>(track).unwrap();
         // for (index, (position, angle)) in track.clone().checkpoints().enumerate() {

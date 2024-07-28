@@ -6,7 +6,6 @@ edition = "2021"
 [dependencies]
 avian2d = { workspace = true }
 bevy = { workspace = true }
-bevy_rand = { workspace = true }
 car = { workspace = true }
 laptag = { workspace = true }
-rand_core = { workspace = true }
+entropy = { workspace = true }

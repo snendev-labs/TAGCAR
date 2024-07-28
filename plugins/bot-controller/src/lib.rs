@@ -1,10 +1,8 @@
-use rand_core::RngCore;
-
 use avian2d::prelude::LinearVelocity;
 use bevy::prelude::*;
 
-use bevy_rand::prelude::{EntropyComponent, WyRand};
 use car::{AccelerateAction, Car, DrivingSystems, SteerAction};
+use entropy::{Entropy, RngCore};
 use laptag::{BombTagIt, LapTagIt};
 
 pub struct BotControllerPlugin;
@@ -61,7 +59,7 @@ impl BotControllerPlugin {
 
     fn decide_bot_controls(
         mut commands: Commands,
-        mut bots: Query<(Entity, &BotState, &mut EntropyComponent<WyRand>), With<BotController>>,
+        mut bots: Query<(Entity, &BotState, &mut Entropy), With<BotController>>,
     ) {
         for (car, _bot, mut entropy) in &mut bots {
             commands.entity(car).insert(AccelerateAction::Forward);

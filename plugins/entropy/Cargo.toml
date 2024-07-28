@@ -1,0 +1,13 @@
+[package]
+name = "entropy"
+version = "0.1.0"
+edition = "2021"
+
+[features]
+default = []
+
+[dependencies]
+bevy = { workspace = true }
+bevy_rand = { workspace = true }
+bevy_prng = { workspace = true }
+rand_core = { workspace = true }

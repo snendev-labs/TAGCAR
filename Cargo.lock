@@ -1382,10 +1382,9 @@ version = "0.1.0"
 dependencies = [
  "avian2d",
  "bevy",
- "bevy_rand",
  "car",
+ "entropy",
  "laptag",
- "rand_core",
 ]
 
 [[package]]
@@ -1464,6 +1463,7 @@ version = "0.1.0"
 dependencies = [
  "bevy",
  "bevy_dolly",
+ "entropy",
 ]
 
 [[package]]
@@ -1943,6 +1943,16 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.72",
+]
+
+[[package]]
+name = "entropy"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "bevy_prng",
+ "bevy_rand",
+ "rand_core",
 ]
 
 [[package]]
@@ -3768,10 +3778,8 @@ version = "0.1.0"
 dependencies = [
  "avian2d",
  "bevy",
- "bevy_prng",
- "bevy_rand",
  "bevy_reactive_blueprints",
- "rand_core",
+ "entropy",
  "track",
 ]
 
@@ -4193,14 +4201,13 @@ dependencies = [
  "avian2d",
  "bevy",
  "bevy-inspector-egui",
- "bevy_rand",
  "bevy_reactive_blueprints",
  "bot_controller",
  "camera",
  "car",
  "controller",
+ "entropy",
  "laptag",
- "rand_core",
  "resurfacer",
  "scoreboard",
  "slowmo",
