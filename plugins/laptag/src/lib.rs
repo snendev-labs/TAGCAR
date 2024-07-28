@@ -8,6 +8,9 @@ use bevy::{
 
 use track::{CheckpointTracker, LapComplete};
 
+mod particles;
+use particles::ConfettiEffect;
+
 #[cfg(feature = "graphics")]
 mod particles;
 #[cfg(feature = "graphics")]
@@ -16,11 +19,8 @@ pub use particles::*;
 pub trait TagIt {
     fn finish_lap() -> impl EntityCommand;
 
-    #[cfg(feature = "graphics")]
-    type EffectContext;
-
-    #[cfg(feature = "graphics")]
-    fn spawn_effects(context: Self::EffectContext) -> impl bevy::ecs::world::Command;
+    // #[cfg(feature = "graphics")]
+    fn spawn_effects() -> impl EntityCommand;
 }
 
 pub struct LapTagPlugins;
@@ -149,6 +149,8 @@ where
             };
             commands.entity(it_entity).remove::<Tag>();
             commands.entity(tagged_entity).insert(Tag::default());
+            commands.entity(it_entity).insert(TagEffect);
+            commands.entity(tagged_entity).insert(TagEffect);
             tags.send(TagEvent {
                 prev_it: it_entity,
                 next_it: tagged_entity,
@@ -217,7 +219,11 @@ impl TagIt for LapTagIt {
         }
     }
 
-    fn spawn_effects(context: Self::EffectContext) -> impl bevy::ecs::world::Command {}
+    fn spawn_effects() -> impl EntityCommand {
+        |entity: Entity, world: &mut World| {
+            world.get_mut(entity).insert(ConfettiEffect);
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, Default)]
@@ -234,7 +240,19 @@ impl TagIt for BombTagIt {
         }
     }
 
-    fn spawn_effects(context: Self::EffectContext) -> impl bevy::ecs::world::Command {}
+    fn spawn_effects() -> impl EntityCommand {
+        |entity: Entity, world: &mut World| {
+            if let Some(transform) = world.get::<Transform>(entity) {
+                world.spawn((
+                    BombEffect,
+                    SpatialBundle {
+                        transform: *transform,
+                        ..default()
+                    },
+                ));
+            }
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug)]

@@ -1,34 +1,54 @@
-use bevy::prelude::*;
+use bevy::{ecs::query::QueryData, prelude::*};
 
 pub struct ParticlesPlugin;
 
 impl Plugin for ParticlesPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, animate_particle_sprites.in_set(ParticleSystems));
+        app.add_systems(
+            Update,
+            (attach_sprites::<ConfettiEffect>, animate_particle_sprites).in_set(ParticleSystems),
+        );
     }
 }
 
-impl ParticlesPlugin {}
-
-fn animate_particle_sprites(
-    mut commands: Commands,
-    time: Res<Time>,
-    mut query: Query<(
-        Entity,
-        &AnimationIndices,
-        &mut AnimationTimer,
-        &mut TextureAtlas,
-    )>,
-) {
-    for (entity, indices, mut timer, mut atlas) in &mut query {
-        timer.tick(time.delta());
-        if timer.just_finished() {
-            atlas.index = if atlas.index == indices.last {
-                commands.entity(entity).despawn(); // Change to remove sprite components, not despawn entity
-                return;
-            } else {
-                atlas.index + 1
+impl ParticlesPlugin {
+    fn animate_particle_sprites(
+        mut commands: Commands,
+        time: Res<Time>,
+        mut query: Query<(
+            Entity,
+            &AnimationIndices,
+            &mut AnimationTimer,
+            &mut TextureAtlas,
+        )>,
+    ) {
+        for (entity, indices, mut timer, mut atlas) in &mut query {
+            timer.tick(time.delta());
+            if timer.just_finished() {
+                atlas.index = if atlas.index == indices.last {
+                    commands.entity(entity).despawn(); // Change to remove sprite components, not despawn entity
+                    return;
+                } else {
+                    atlas.index + 1
+                }
             }
+        }
+    }
+
+    fn attach_sprites<T: ParticleEffect + Component>(
+        mut commands: Commands,
+        asset_server: Res<AssetServer>,
+        texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
+        query: Query<Entity, With<T>>,
+    ) {
+        for effect_entity in &query {
+            let sprite_entity = commands
+                .spawn(T::generate_sprite(asset_server, texture_atlas_layouts))
+                .id();
+            commands
+                .entity(effect_entity)
+                .remove::<T>()
+                .add_child(sprite_entity);
         }
     }
 }
@@ -37,18 +57,19 @@ fn animate_particle_sprites(
 #[derive(SystemSet)]
 pub struct ParticleSystems;
 
-pub trait ParticleSprite {
-    fn generate_sprite_bundle(
+pub trait ParticleEffect {
+    fn generate_sprite(
         asset_server: Res<AssetServer>,
         texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
     ) -> (SpriteBundle, TextureAtlas, AnimationIndices);
 }
 
+#[derive(Clone, Copy, Debug)]
 #[derive(Component, Reflect)]
-pub struct ConfettiSprite;
+pub struct ConfettiEffect;
 
-impl ParticleSprite for ConfettiSprite {
-    fn generate_sprite_bundle(
+impl ParticleEffect for ConfettiEffect {
+    fn generate_sprite(
         asset_server: Res<AssetServer>,
         mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
     ) -> (SpriteBundle, TextureAtlas, AnimationIndices) {
@@ -71,6 +92,14 @@ impl ParticleSprite for ConfettiSprite {
         )
     }
 }
+
+#[derive(Clone, Copy, Debug)]
+#[derive(Component, Reflect)]
+pub struct BombEffect;
+
+#[derive(Clone, Copy, Debug)]
+#[derive(Component, Reflect)]
+pub struct TagEffect;
 
 #[derive(Copy, Clone, Debug)]
 #[derive(Component)]
