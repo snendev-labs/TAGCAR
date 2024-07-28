@@ -208,6 +208,14 @@ impl TrackChunk {
             chunk_border_angle,
         }
     }
+
+    pub fn origin(&self) -> Vec2 {
+        self.chunk_origin
+    }
+
+    pub fn angle(&self) -> f32 {
+        self.chunk_border_angle
+    }
 }
 
 #[derive(Clone, Debug, Default)]

@@ -1,23 +1,33 @@
 use bevy::prelude::*;
 use bevy_dolly::prelude::{Dolly, Position, Rig, Smooth};
 
+use entropy::*;
+
 pub struct GameCameraPlugin;
 
 impl Plugin for GameCameraPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, Self::spawn_camera.in_set(GameCameraSystems::Spawn))
+            .configure_sets(
+                Update,
+                GameCameraSystems::Shake.after(GameCameraSystems::Track),
+            )
             .add_systems(
                 Update,
                 (Self::camera_tracking, Dolly::<GameCamera>::update_2d_active)
                     .chain()
                     .in_set(GameCameraSystems::Track),
+            )
+            .add_systems(
+                Update,
+                (Self::shake_camera).in_set(GameCameraSystems::Shake),
             );
         app.register_type::<GameCamera>();
     }
 }
 
 impl GameCameraPlugin {
-    fn spawn_camera(mut commands: Commands) {
+    fn spawn_camera(mut commands: Commands, mut entropy: ResMut<GlobalEntropy<WyRand>>) {
         commands.spawn((
             GameCamera,
             Rig::builder()
@@ -25,6 +35,7 @@ impl GameCameraPlugin {
                 .with(Smooth::new_position(0.8))
                 .build(),
             Name::new("Game Camera"),
+            entropy.fork_rng(),
             Camera2dBundle::default(),
         ));
     }
@@ -42,6 +53,15 @@ impl GameCameraPlugin {
             0.,
         );
     }
+
+    fn shake_camera(mut rigs: Query<(&mut Rig, &mut Entropy)>) {
+        let (mut rig, mut entropy) = rigs.single_mut();
+        let camera_driver = rig.driver_mut::<Position>();
+        let shake =
+            Vec3::new(entropy.next_u32() as f32, entropy.next_u32() as f32, 0.).normalize_or_zero();
+        info!("{shake}");
+        camera_driver.translate(shake * 100.);
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -49,6 +69,7 @@ impl GameCameraPlugin {
 pub enum GameCameraSystems {
     Spawn,
     Track,
+    Shake,
 }
 
 #[derive(Clone, Copy, Debug)]

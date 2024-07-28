@@ -1,12 +1,24 @@
 use std::marker::PhantomData;
 
 use avian2d::prelude::CollisionStarted;
-use bevy::{ecs::system::EntityCommand, prelude::*, reflect::GetTypeRegistration};
+use bevy::{
+    app::PluginGroupBuilder, ecs::system::EntityCommand, prelude::*, reflect::GetTypeRegistration,
+};
 
 use track::{CheckpointTracker, LapComplete};
 
 pub trait TagIt {
     fn finish_lap() -> impl EntityCommand;
+}
+
+pub struct LapTagPlugins;
+
+impl PluginGroup for LapTagPlugins {
+    fn build(self) -> PluginGroupBuilder {
+        PluginGroupBuilder::start::<Self>()
+            .add(LapTagPlugin::<LapTagIt>::default())
+            .add(LapTagPlugin::<BombTagIt>::default())
+    }
 }
 
 #[derive(Default)]
@@ -19,7 +31,7 @@ where
     Tag: Component + Default + GetTypeRegistration + TagIt + Send + Sync + 'static,
 {
     fn build(&self, app: &mut App) {
-        app.add_systems(
+        app.add_event::<TagEvent>().add_systems(
             Update,
             (
                 Self::transfer_tag,
@@ -44,6 +56,7 @@ where
         mut collisions: EventReader<CollisionStarted>,
         tag_its: Query<Entity, With<Tag>>,
         can_be_its: Query<Entity, (With<CanBeIt>, Without<Tag>)>,
+        mut tags: EventWriter<TagEvent>,
     ) where
         Tag: Default,
     {
@@ -62,6 +75,10 @@ where
             };
             commands.entity(it_entity).remove::<Tag>();
             commands.entity(tagged_entity).insert(Tag::default());
+            tags.send(TagEvent {
+                prev_it: it_entity,
+                next_it: tagged_entity,
+            });
         }
     }
 
@@ -134,4 +151,11 @@ impl TagIt for BombTagIt {
             world.entity_mut(entity).despawn_recursive();
         }
     }
+}
+
+#[derive(Clone, Copy, Debug)]
+#[derive(Event, Reflect)]
+pub struct TagEvent {
+    pub prev_it: Entity,
+    pub next_it: Entity,
 }

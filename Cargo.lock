@@ -1377,6 +1377,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "bot_controller"
+version = "0.1.0"
+dependencies = [
+ "avian2d",
+ "bevy",
+ "car",
+ "entropy",
+ "laptag",
+]
+
+[[package]]
 name = "bumpalo"
 version = "3.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1452,6 +1463,7 @@ version = "0.1.0"
 dependencies = [
  "bevy",
  "bevy_dolly",
+ "entropy",
 ]
 
 [[package]]
@@ -1931,6 +1943,16 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.72",
+]
+
+[[package]]
+name = "entropy"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "bevy_prng",
+ "bevy_rand",
+ "rand_core",
 ]
 
 [[package]]
@@ -3756,10 +3778,8 @@ version = "0.1.0"
 dependencies = [
  "avian2d",
  "bevy",
- "bevy_prng",
- "bevy_rand",
  "bevy_reactive_blueprints",
- "rand_core",
+ "entropy",
  "track",
 ]
 
@@ -4182,9 +4202,11 @@ dependencies = [
  "bevy",
  "bevy-inspector-egui",
  "bevy_reactive_blueprints",
+ "bot_controller",
  "camera",
  "car",
  "controller",
+ "entropy",
  "laptag",
  "resurfacer",
  "scoreboard",
