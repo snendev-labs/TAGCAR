@@ -43,13 +43,12 @@ version = "0.1.0"
 edition = "2021"
 
 [features]
-default = []
+default = ["audio"]
+audio = ["dep:audio_fx", "dep:bg_music", "dep:bevy_kira_audio"]
 debug = ["dep:bevy-inspector-egui", "avian2d/debug-plugin"]
 
 [dependencies]
 # plugins
-audio_fx = { workspace = true }
-bg_music = { workspace = true }
 bot_controller = { workspace = true }
 camera = { workspace = true }
 car = { workspace = true, features = ["graphics"] }
@@ -60,6 +59,8 @@ laptag = { workspace = true }
 scoreboard = { workspace = true }
 slowmo = { workspace = true }
 track = { workspace = true, features = ["graphics"] }
+audio_fx = { workspace = true, optional = true }
+bg_music = { workspace = true, optional = true }
 
 # bevy
 avian2d = { workspace = true }
@@ -92,7 +93,7 @@ bevy = { workspace = true, features = [
     "sysinfo_plugin",
 ] }
 bevy_asset_loader = { workspace = true }
-bevy_kira_audio = { workspace = true }
+bevy_kira_audio = { workspace = true, optional = true }
 bevy_reactive_blueprints = { workspace = true }
 bevy-inspector-egui = { workspace = true, optional = true }
 

@@ -1,11 +1,8 @@
-use audio_fx::AudioFxAssets;
 use bevy::prelude::*;
 
-use bg_music::BgMusicAssets;
 use bot_controller::BotController;
 use camera::CameraTracker;
 use car::{Car, CarBlueprint};
-use controller::Controller;
 use entropy::{ForkableRng, GlobalEntropy, RngCore};
 use laptag::{BombTagIt, CanBeIt, LapTagIt, Score};
 use track::{CheckpointHighlightTracker, Track, TrackInterior};
@@ -17,14 +14,14 @@ fn main() {
     app.add_plugins(DefaultPlugins);
     app.add_plugins(TagcarPlugins);
     app.add_systems(Startup, spawn_loading_ui);
-    app.add_systems(
-        Update,
-        (spawn_game, despawn_ui).run_if(
-            resource_exists::<BgMusicAssets>
-                .and_then(resource_exists::<AudioFxAssets>)
-                .and_then(run_once()),
-        ),
-    );
+
+    #[cfg(feature = "audio")]
+    let run_condition = resource_exists::<bg_music::BgMusicAssets>
+        .and_then(resource_exists::<audio_fx::AudioFxAssets>)
+        .and_then(run_once());
+    #[cfg(not(feature = "audio"))]
+    let run_condition = run_once();
+    app.add_systems(Update, (spawn_game, despawn_ui).run_if(run_condition));
     app.run();
 }
 
