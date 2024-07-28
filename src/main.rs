@@ -1,9 +1,9 @@
 use bevy::prelude::*;
 
-use bot_controller::BotController;
+use bot_controller::BotControllerBundle;
 use camera::CameraTracker;
 use car::{Car, CarBlueprint};
-use entropy::{ForkableRng, GlobalEntropy, RngCore};
+use entropy::{GlobalEntropy, RngCore};
 use laptag::{BombTagIt, CanBeIt, LapTagIt, Score};
 use track::{CheckpointHighlightTracker, Track, TrackInterior};
 
@@ -27,19 +27,35 @@ fn main() {
 
 fn spawn_game(mut commands: Commands, mut entropy: ResMut<GlobalEntropy>) {
     let track = Track::default();
-    let first_chunk = track.chunks().next().unwrap();
+    let (first_chunk, second_chunk, third_chunk) = {
+        let mut chunks = track.chunks();
+        let first_chunk = chunks.next().unwrap();
+        let second_chunk = chunks.next().unwrap();
+        let third_chunk = chunks.next().unwrap();
+        (first_chunk, second_chunk, third_chunk)
+    };
     let bounds_max = Vec2::new(track.half_length() - 300., track.radius() - 200.);
 
     const CAR_COUNT: usize = 5;
     let mut cars_to_spawn = (0..CAR_COUNT).collect::<Vec<_>>();
     cars_to_spawn.sort_by_cached_key(|_| entropy.next_u32());
-    let spawn_angle = first_chunk.angle() + std::f32::consts::FRAC_PI_2;
     for (position_index, car_index) in cars_to_spawn.into_iter().enumerate() {
         let start_offset = track.interior_radius() + Car::WIDTH;
         let car_index_offset =
             (position_index as f32 / CAR_COUNT as f32) * (track.thickness() - Car::WIDTH * 2.);
-        let spawn_position = first_chunk.origin()
-            + Vec2::from_angle(first_chunk.angle()) * (start_offset + car_index_offset);
+        // the car with scoring tag starts ahead
+        // and the car with bomb tag starts behind
+        let spawn_chunk = if car_index == 1 {
+            third_chunk.clone()
+        } else if car_index == 2 {
+            first_chunk.clone()
+        } else {
+            second_chunk.clone()
+        };
+        let spawn_angle = spawn_chunk.angle() + std::f32::consts::FRAC_PI_2;
+        let spawn_position = spawn_chunk.origin()
+            + Vec2::from_angle(spawn_chunk.angle()) * (start_offset + car_index_offset);
+
         let mut builder = commands.spawn((
             CanBeIt,
             Score::default(),
@@ -48,19 +64,19 @@ fn spawn_game(mut commands: Commands, mut entropy: ResMut<GlobalEntropy>) {
         match car_index {
             0 => {
                 builder.insert((
-                    Controller::ArrowKeys,
+                    BotControllerBundle::new(entropy.as_mut()),
                     CameraTracker::rect(-bounds_max, bounds_max),
                     CheckpointHighlightTracker,
                 ));
             }
             1 => {
-                builder.insert((BotController, entropy.fork_rng(), LapTagIt));
+                builder.insert((BotControllerBundle::new(entropy.as_mut()), LapTagIt));
             }
             2 => {
-                builder.insert((BotController, entropy.fork_rng(), BombTagIt));
+                builder.insert((BotControllerBundle::new(entropy.as_mut()), BombTagIt));
             }
             _ => {
-                builder.insert((BotController, entropy.fork_rng()));
+                builder.insert(BotControllerBundle::new(entropy.as_mut()));
             }
         }
     }

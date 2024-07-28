@@ -7,5 +7,6 @@ edition = "2021"
 avian2d = { workspace = true }
 bevy = { workspace = true }
 car = { workspace = true }
-laptag = { workspace = true }
 entropy = { workspace = true }
+laptag = { workspace = true }
+track = { workspace = true }

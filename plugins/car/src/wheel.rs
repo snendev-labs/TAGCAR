@@ -1,15 +1,17 @@
 use avian2d::prelude::{
-    Collider, CollisionLayers, FixedJoint, Joint, Mass, RevoluteJoint, RigidBody, Sleeping,
+    Collider, CollisionLayers, FixedJoint, Joint, LayerMask, Mass, RevoluteJoint, RigidBody,
+    Sleeping,
 };
 use bevy::prelude::*;
 
-use crate::{Car, CarCollisionLayer};
+use crate::Car;
 
 #[derive(Clone, Copy, Debug, Default)]
 #[derive(Component, Reflect)]
 pub struct Wheel;
 
 impl Wheel {
+    pub const COLLISION_LAYER: u8 = 2;
     pub const WIDTH: f32 = 5.;
     pub const LENGTH: f32 = 10.;
     pub const MASS: Mass = Mass(10.);
@@ -46,11 +48,10 @@ impl WheelBundle {
             rigid_body: RigidBody::Dynamic,
             collider,
             spatial: SpatialBundle::from_transform(transform),
-            layer: CollisionLayers::new(
-                CarCollisionLayer::Wheel,
-                // TODO: empty set here
-                [CarCollisionLayer::Wheel],
-            ),
+            layer: CollisionLayers {
+                memberships: LayerMask(1 << Wheel::COLLISION_LAYER),
+                filters: LayerMask(1 << Wheel::COLLISION_LAYER),
+            },
             mass: Wheel::MASS,
             sleeping: Sleeping,
         }
