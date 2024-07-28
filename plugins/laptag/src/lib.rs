@@ -15,19 +15,10 @@ pub trait TagIt {
     fn finish_lap() -> impl EntityCommand;
 
     #[cfg(feature = "graphics")]
-    type Effect: Component;
+    type EffectContext;
 
     #[cfg(feature = "graphics")]
-    fn spawn_effects(position: Vec2) -> impl bevy::ecs::world::Command {
-        move |world: &mut World| {
-            // let mut effects =
-            //     world.query_filtered::<(&mut EffectSpawner, &mut Transform), With<Self::Effect>>();
-            // let (mut effect, mut transform) = effects.single_mut(world);
-            // transform.translation.x = position.x;
-            // transform.translation.y = position.y;
-            // effect.reset();
-        }
-    }
+    fn spawn_effects(context: Self::EffectContext) -> impl bevy::ecs::world::Command;
 }
 
 pub struct LapTagPlugins;
@@ -120,7 +111,7 @@ where
         for lap in completed_laps.read() {
             if let Ok(transform) = racers.get(lap.racer) {
                 #[cfg(feature = "graphics")]
-                commands.add(Tag::spawn_effects(transform.translation.xy()));
+                commands.add(Tag::spawn_effects(transform.translation.xy));
                 commands.entity(lap.racer).add(Tag::finish_lap());
             }
         }
@@ -151,7 +142,7 @@ pub struct ScoreTagIt;
 
 impl TagIt for ScoreTagIt {
     #[cfg(feature = "graphics")]
-    type Effect = ConfettiParticles;
+    type EffectContext = Entity;
 
     fn finish_lap() -> impl EntityCommand {
         |entity: Entity, world: &mut World| {
@@ -161,6 +152,8 @@ impl TagIt for ScoreTagIt {
             **score += 1;
         }
     }
+
+    fn spawn_effects(context: Self::EffectContext) -> impl bevy::ecs::world::Command {}
 }
 
 #[derive(Clone, Copy, Debug, Default)]
@@ -169,11 +162,13 @@ pub struct BombTagIt;
 
 impl TagIt for BombTagIt {
     #[cfg(feature = "graphics")]
-    type Effect = ExplosionParticles;
+    type EffectContext = Vec2;
 
     fn finish_lap() -> impl EntityCommand {
         |entity: Entity, world: &mut World| {
             world.entity_mut(entity).despawn_recursive();
         }
     }
+
+    fn spawn_effects(context: Self::EffectContext) -> impl bevy::ecs::world::Command {}
 }
