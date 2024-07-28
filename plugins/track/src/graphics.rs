@@ -6,7 +6,7 @@ use bevy::prelude::*;
 
 use bevy_reactive_blueprints::{AsChild, BlueprintPlugin, FromBlueprint};
 
-use crate::{Checkpoint, Track, TrackInterior};
+use crate::{Checkpoint, Track, TrackInterior, Wall};
 
 pub struct GraphicsPlugin;
 
@@ -22,7 +22,8 @@ impl Plugin for GraphicsPlugin {
                 Checkpoint,
                 CheckpointGraphicsBundle,
                 AsChild,
-            >::default());
+            >::default())
+            .add_plugins(BlueprintPlugin::<Wall, WallGraphicsBundle, AsChild>::default());
     }
 }
 #[derive(SystemParam)]
@@ -134,5 +135,37 @@ impl FromBlueprint<Checkpoint> for CheckpointGraphicsBundle {
             params.meshes.as_mut(),
             params.materials.as_mut(),
         )
+    }
+}
+
+#[derive(Bundle)]
+pub struct WallGraphicsBundle {
+    sprite: ColorMesh2dBundle,
+}
+
+impl WallGraphicsBundle {
+    pub fn new(
+        wall: &Wall,
+        meshes: &mut Assets<Mesh>,
+        materials: &mut Assets<ColorMaterial>,
+    ) -> Self {
+        Self {
+            sprite: ColorMesh2dBundle {
+                material: materials.add(Color::Srgba(palettes::css::ROSY_BROWN)),
+                mesh: meshes
+                    .add(Rectangle::new(wall.size.x, wall.size.y).mesh())
+                    .into(),
+                ..Default::default()
+            },
+        }
+    }
+}
+
+impl FromBlueprint<Wall> for WallGraphicsBundle {
+    type Params<'w, 's> = GraphicsAssetsParams<'w>;
+
+    fn from_blueprint(wall: &Wall, params: &mut StaticSystemParam<Self::Params<'_, '_>>) -> Self {
+        let params = params.deref_mut();
+        Self::new(wall, params.meshes.as_mut(), params.materials.as_mut())
     }
 }

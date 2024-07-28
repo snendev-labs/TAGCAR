@@ -1382,8 +1382,10 @@ version = "0.1.0"
 dependencies = [
  "avian2d",
  "bevy",
+ "bevy_rand",
  "car",
  "laptag",
+ "rand_core",
 ]
 
 [[package]]
@@ -4191,12 +4193,14 @@ dependencies = [
  "avian2d",
  "bevy",
  "bevy-inspector-egui",
+ "bevy_rand",
  "bevy_reactive_blueprints",
  "bot_controller",
  "camera",
  "car",
  "controller",
  "laptag",
+ "rand_core",
  "resurfacer",
  "scoreboard",
  "slowmo",

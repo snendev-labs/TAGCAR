@@ -6,7 +6,7 @@ use bevy::prelude::*;
 
 use bevy_reactive_blueprints::{AsChild, BlueprintPlugin, FromBlueprint};
 
-use crate::Resurfacer;
+use crate::{Peg, Resurfacer};
 
 pub struct GraphicsPlugin;
 
@@ -16,7 +16,8 @@ impl Plugin for GraphicsPlugin {
             Resurfacer,
             ResurfacerGraphicsBundle,
             AsChild,
-        >::default());
+        >::default())
+            .add_plugins(BlueprintPlugin::<Peg, PegGraphicsBundle, AsChild>::default());
     }
 }
 #[derive(SystemParam)]
@@ -61,5 +62,27 @@ impl FromBlueprint<Resurfacer> for ResurfacerGraphicsBundle {
             params.meshes.as_mut(),
             params.materials.as_mut(),
         )
+    }
+}
+
+#[derive(Bundle)]
+pub struct PegGraphicsBundle {
+    sprite: ColorMesh2dBundle,
+}
+
+impl FromBlueprint<Peg> for PegGraphicsBundle {
+    type Params<'w, 's> = GraphicsAssetsParams<'w>;
+
+    fn from_blueprint(_: &Peg, params: &mut StaticSystemParam<Self::Params<'_, '_>>) -> Self {
+        let params = params.deref_mut();
+        Self {
+            sprite: ColorMesh2dBundle {
+                material: params
+                    .materials
+                    .add(Color::Srgba(palettes::css::SADDLE_BROWN)),
+                mesh: params.meshes.add(Circle::new(Peg::RADIUS).mesh()).into(),
+                ..Default::default()
+            },
+        }
     }
 }

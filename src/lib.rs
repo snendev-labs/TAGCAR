@@ -1,9 +1,10 @@
-use avian2d::prelude::PhysicsDebugPlugin;
 #[cfg(feature = "debug")]
+use avian2d::prelude::PhysicsDebugPlugin;
 use avian2d::{prelude::Gravity, PhysicsPlugins};
 use bevy::{app::PluginGroupBuilder, input::common_conditions::input_just_pressed, prelude::*};
 #[cfg(feature = "debug")]
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
+use bevy_rand::{plugin::EntropyPlugin, prelude::WyRand};
 use bevy_reactive_blueprints::BlueprintsPlugin;
 
 pub struct TagcarPlugins;
@@ -16,6 +17,7 @@ impl PluginGroup for TagcarPlugins {
             .add(WorldInspectorPlugin::default())
             .add(PhysicsDebugPlugin::default());
         builder
+            .add(EntropyPlugin::<WyRand>::default())
             .add(PhysicsPlugin)
             .add(BlueprintsPlugin)
             .add(car::CarPlugin)
