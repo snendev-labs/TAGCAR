@@ -1,4 +1,4 @@
-use bevy::{color::palettes, prelude::*};
+use bevy::{asset::AssetMetaCheck, color::palettes, prelude::*};
 
 use entropy::GlobalEntropy;
 use laptag::LapTagAssets;
@@ -9,7 +9,13 @@ use tagcar::{spawn_cars, Player, TagcarPlugins};
 
 fn main() {
     let mut app = App::new();
-    app.add_plugins(DefaultPlugins);
+    app.add_plugins(DefaultPlugins.set(AssetPlugin {
+        // Wasm builds will check for meta files (that don't exist) if this isn't set.
+        // This causes errors and even panics in web builds on itch.
+        // See https://github.com/bevyengine/bevy_github_ci_template/issues/48.
+        meta_check: AssetMetaCheck::Never,
+        ..default()
+    }));
     app.add_plugins(TagcarPlugins);
 
     app.add_systems(Startup, spawn_loading_ui);
