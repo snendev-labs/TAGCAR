@@ -31,12 +31,14 @@ fn main() {
 
 fn spawn_game(mut commands: Commands, mut entropy: ResMut<GlobalEntropy>) {
     let track = Track::default();
-    let (first_chunk, second_chunk, third_chunk) = {
+    let (first_chunk, third_chunk, fifth_chunk) = {
         let mut chunks = track.chunks();
         let first_chunk = chunks.next().unwrap();
-        let second_chunk = chunks.next().unwrap();
+        chunks.next().unwrap();
         let third_chunk = chunks.next().unwrap();
-        (first_chunk, second_chunk, third_chunk)
+        chunks.next().unwrap();
+        let fifth_chunk = chunks.next().unwrap();
+        (first_chunk, third_chunk, fifth_chunk)
     };
     let bounds_max = Vec2::new(track.half_length() - 300., track.radius() - 200.);
 
@@ -50,11 +52,11 @@ fn spawn_game(mut commands: Commands, mut entropy: ResMut<GlobalEntropy>) {
         // the car with scoring tag starts ahead
         // and the car with bomb tag starts behind
         let spawn_chunk = if car_index == 1 {
-            third_chunk.clone()
+            fifth_chunk.clone()
         } else if car_index == 2 {
             first_chunk.clone()
         } else {
-            second_chunk.clone()
+            third_chunk.clone()
         };
         let spawn_angle = spawn_chunk.angle() + std::f32::consts::FRAC_PI_2;
         let spawn_position = spawn_chunk.origin()
@@ -68,7 +70,7 @@ fn spawn_game(mut commands: Commands, mut entropy: ResMut<GlobalEntropy>) {
         match car_index {
             0 => {
                 builder.insert((
-                    BotControllerBundle::new(entropy.as_mut()),
+                    Controller::WASDKeys,
                     CameraTracker::rect(-bounds_max, bounds_max),
                     CheckpointHighlightTracker,
                 ));

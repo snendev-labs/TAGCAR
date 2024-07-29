@@ -16,8 +16,8 @@ impl Car {
     pub const LENGTH: f32 = 60.;
     pub const HEIGHT: f32 = 40.;
     pub const MASS: Mass = Mass(100.);
-    pub const ENGINE_POWER: f32 = 1e3;
-    pub const REVERSE_POWER: f32 = -8e2;
+    pub const ENGINE_POWER: f32 = 4.2e3;
+    pub const REVERSE_POWER: f32 = -3e3;
     pub const MAX_STEERING_DEG: f32 = 18.;
     pub const COLLISION_LAYER: LayerMask = LayerMask(1 << 1);
 }
@@ -56,8 +56,8 @@ impl CarPhysicsBundle {
                 Car::COLLISION_LAYER,
                 LayerMask::ALL & !Wheel::COLLISION_LAYER,
             ),
-            linear_damping: LinearDamping(0.1),
-            angular_damping: AngularDamping(0.1),
+            linear_damping: LinearDamping(1.),
+            angular_damping: AngularDamping(1.5),
             sleeping: Sleeping,
             mass: Mass(100.),
         }
