@@ -3,7 +3,13 @@ name = "laptag"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+default = []
+graphics = ["dep:bevy_asset_loader", "dep:bevy_reactive_blueprints"]
+
 [dependencies]
 avian2d = { workspace = true }
 bevy = { workspace = true, features = ["bevy_pbr"] }
+bevy_asset_loader = { workspace = true, optional = true }
+bevy_reactive_blueprints = { workspace = true, optional = true }
 track = { workspace = true }

@@ -48,7 +48,10 @@ impl WheelBundle {
             rigid_body: RigidBody::Dynamic,
             collider,
             spatial: SpatialBundle::from_transform(transform),
-            layer: CollisionLayers::new(Wheel::COLLISION_LAYER, Wheel::COLLISION_LAYER),
+            layer: CollisionLayers::new(
+                Wheel::COLLISION_LAYER,
+                LayerMask::ALL & !Car::COLLISION_LAYER,
+            ),
             mass: Wheel::MASS,
             sleeping: Sleeping,
         }

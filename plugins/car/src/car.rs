@@ -5,6 +5,8 @@ use bevy::{ecs::system::StaticSystemParam, prelude::*};
 
 use bevy_reactive_blueprints::{Blueprint, FromBlueprint};
 
+use crate::Wheel;
+
 #[derive(Clone, Copy, Debug, Default)]
 #[derive(Component, Reflect)]
 pub struct Car;
@@ -50,7 +52,10 @@ impl CarPhysicsBundle {
             rigid_body: RigidBody::Dynamic,
             collider: Self::collider(),
             spatial: SpatialBundle::from_transform(transform),
-            layer: CollisionLayers::new(Car::COLLISION_LAYER, LayerMask::ALL),
+            layer: CollisionLayers::new(
+                Car::COLLISION_LAYER,
+                LayerMask::ALL & !Wheel::COLLISION_LAYER,
+            ),
             linear_damping: LinearDamping(0.1),
             angular_damping: AngularDamping(0.1),
             sleeping: Sleeping,

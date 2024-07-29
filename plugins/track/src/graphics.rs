@@ -85,7 +85,7 @@ pub enum TrackAssetsState {
 
 #[derive(AssetCollection, Resource)]
 pub struct TrackAssets {
-    #[cfg_attr(not(target_arch = "wasm32"), asset(path = "textures/logo.png"))]
+    #[asset(path = "textures/logo.png")]
     pub logo: Handle<Image>,
 }
 
