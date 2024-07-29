@@ -34,7 +34,6 @@ bevy = { workspace = true, features = [
     "png",
     "hdr",
     "x11",
-    "bevy_gizmos",
     "android_shared_stdcxx",
     "tonemapping_luts",
     "smaa_luts",

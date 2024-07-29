@@ -3,9 +3,13 @@ name = "bot_controller"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+default = []
+gizmos = ["bevy/bevy_gizmos"]
+
 [dependencies]
 avian2d = { workspace = true }
-bevy = { workspace = true, features = ["bevy_gizmos"] }
+bevy = { workspace = true }
 car = { workspace = true }
 entropy = { workspace = true }
 laptag = { workspace = true }

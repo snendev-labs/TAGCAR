@@ -19,6 +19,7 @@ impl Plugin for BotControllerPlugin {
                 (
                     Self::compute_goal_positions,
                     Self::decide_bot_controls,
+                    #[cfg(feature = "gizmos")]
                     Self::render_bot_gizmos,
                 )
                     .chain()
@@ -232,6 +233,7 @@ impl BotControllerPlugin {
         }
     }
 
+    #[cfg(feature = "gizmos")]
     fn render_bot_gizmos(mut gizmos: Gizmos, bots: Query<(&Transform, &BotState)>) {
         for (
             transform,

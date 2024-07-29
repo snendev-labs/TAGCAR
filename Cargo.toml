@@ -45,7 +45,8 @@ edition = "2021"
 [features]
 default = ["audio"]
 audio = ["dep:audio_fx", "dep:bg_music", "dep:bevy_kira_audio"]
-debug = ["dep:bevy-inspector-egui", "avian2d/debug-plugin"]
+debug = ["bot_controller/gizmos", "dep:bevy-inspector-egui"]
+debug-all = ["debug", "avian2d/debug-plugin"]
 
 [dependencies]
 # plugins
@@ -65,8 +66,7 @@ track = { workspace = true, features = ["graphics"] }
 # bevy
 avian2d = { workspace = true }
 bevy = { workspace = true, features = [
-    # default-features excluding audio, vorbis
-    "animation",
+    # default-features excluding audio, vorbis, other unneeded ones
     "bevy_asset",
     "bevy_state",
     "bevy_color",
@@ -74,7 +74,6 @@ bevy = { workspace = true, features = [
     "bevy_scene",
     "bevy_winit",
     "bevy_core_pipeline",
-    "bevy_pbr",
     "bevy_gltf",
     "bevy_render",
     "bevy_sprite",
@@ -84,7 +83,6 @@ bevy = { workspace = true, features = [
     "png",
     "hdr",
     "x11",
-    "bevy_gizmos",
     "android_shared_stdcxx",
     "tonemapping_luts",
     "smaa_luts",
