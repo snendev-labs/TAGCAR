@@ -49,18 +49,18 @@ debug = ["dep:bevy-inspector-egui", "avian2d/debug-plugin"]
 
 [dependencies]
 # plugins
+audio_fx = { workspace = true, optional = true }
+bg_music = { workspace = true, optional = true }
 bot_controller = { workspace = true }
 camera = { workspace = true }
 car = { workspace = true, features = ["graphics"] }
 controller = { workspace = true }
 entropy = { workspace = true }
+laptag = { workspace = true, features = ["graphics"] }
 resurfacer = { workspace = true, features = ["graphics"] }
-laptag = { workspace = true }
 scoreboard = { workspace = true }
 slowmo = { workspace = true }
 track = { workspace = true, features = ["graphics"] }
-audio_fx = { workspace = true, optional = true }
-bg_music = { workspace = true, optional = true }
 
 # bevy
 avian2d = { workspace = true }

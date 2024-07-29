@@ -37,7 +37,7 @@ impl FromBlueprint<CarBlueprint> for CarGraphicsBundle {
         CarGraphicsBundle {
             shape: MaterialMesh2dBundle {
                 mesh: params.0.add(Rectangle::new(Car::LENGTH, Car::WIDTH)).into(),
-                material: params.1.add(Color::from(palettes::css::RED)),
+                material: params.1.add(Color::from(palettes::css::AQUA)),
                 ..Default::default()
             },
         }

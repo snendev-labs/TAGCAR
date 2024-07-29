@@ -5,8 +5,8 @@ use camera::CameraTracker;
 use car::{Car, CarBlueprint};
 use controller::Controller;
 use entropy::{ForkableRng, GlobalEntropy, RngCore};
-use laptag::{BombTagIt, CanBeIt, LapTagIt, Score};
-use track::{CheckpointHighlightTracker, Track, TrackInterior};
+use laptag::{BombTagIt, CanBeIt, LapTagAssets, LapTagIt, Score};
+use track::{CheckpointHighlightTracker, Track, TrackAssets, TrackInterior};
 
 use tagcar::TagcarPlugins;
 
@@ -16,12 +16,13 @@ fn main() {
     app.add_plugins(TagcarPlugins);
     app.add_systems(Startup, spawn_loading_ui);
 
+    let run_condition = resource_exists::<TrackAssets>
+        .and_then(resource_exists::<LapTagAssets>)
+        .and_then(run_once());
     #[cfg(feature = "audio")]
     let run_condition = resource_exists::<bg_music::BgMusicAssets>
         .and_then(resource_exists::<audio_fx::AudioFxAssets>)
-        .and_then(run_once());
-    #[cfg(not(feature = "audio"))]
-    let run_condition = run_once();
+        .and_then(run_condition);
     app.add_systems(Update, (spawn_game, despawn_ui).run_if(run_condition));
     app.run();
 }

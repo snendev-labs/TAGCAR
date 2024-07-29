@@ -8,6 +8,11 @@ use bevy::{
 
 use track::{CheckpointTracker, LapComplete};
 
+#[cfg(feature = "graphics")]
+mod graphics;
+#[cfg(feature = "graphics")]
+pub use graphics::*;
+
 pub trait TagIt {
     fn finish_lap() -> impl EntityCommand;
 }
@@ -27,6 +32,9 @@ pub struct LapsPlugin;
 
 impl Plugin for LapsPlugin {
     fn build(&self, app: &mut App) {
+        #[cfg(feature = "graphics")]
+        app.add_plugins(graphics::GraphicsPlugin);
+
         app.add_systems(
             Update,
             (Self::tick_immunity, Self::handle_tags)

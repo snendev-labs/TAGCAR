@@ -1,6 +1,4 @@
-use avian2d::prelude::{
-    ExternalAngularImpulse, ExternalImpulse, LinearVelocity, PhysicsLayer, Rotation,
-};
+use avian2d::prelude::{ExternalAngularImpulse, ExternalImpulse, LinearVelocity, Rotation};
 use bevy::prelude::*;
 
 use bevy_reactive_blueprints::BlueprintPlugin;
@@ -243,10 +241,3 @@ pub enum AccelerateAction {
 #[derive(Clone, Copy, Debug)]
 #[derive(Component, Deref, Reflect)]
 pub struct SteerAction(pub f32);
-
-#[derive(Clone, Copy, Debug)]
-#[derive(PhysicsLayer)]
-pub enum CarCollisionLayer {
-    Car,
-    Wheel,
-}
