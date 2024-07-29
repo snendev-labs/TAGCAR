@@ -65,7 +65,7 @@ impl GameLoopPlugin {
                 .iter()
                 .map(|(score, player)| (**score, player.is_some()))
                 .max_by(|(score1, _), (score2, _)| score1.cmp(score2))
-                .filter(|(score, _)| *score > 10)
+                .filter(|(score, _)| *score >= 5)
                 .map(|(_, is_player)| is_player)
         };
         if let Some(is_game_won) = game_result {

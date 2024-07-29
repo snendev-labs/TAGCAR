@@ -12,6 +12,7 @@ use car::{Car, CarBlueprint};
 use controller::Controller;
 use entropy::{EntropyPlugin, GlobalEntropy, RngCore};
 use laptag::{BombTagIt, CanBeIt, LapTagIt, Score, TagEvent};
+use scoreboard::CarName;
 use track::{CheckpointHighlightTracker, LapComplete, Track, TrackChunk};
 
 mod game_loop;
@@ -124,6 +125,10 @@ fn event_occurs_on_camera<E: GetEntities + Event>(
     return false;
 }
 
+const ROW_COUNT: usize = 2;
+const COL_COUNT: usize = 4;
+const GRID_COUNT: usize = ROW_COUNT * COL_COUNT;
+
 pub fn spawn_cars(commands: &mut Commands, track: &Track, entropy: &mut GlobalEntropy) {
     let chunks = track.chunks().collect::<Vec<_>>();
     let bounds_max = Vec2::new(track.half_length() - 300., track.radius() - 200.);
@@ -133,14 +138,11 @@ pub fn spawn_cars(commands: &mut Commands, track: &Track, entropy: &mut GlobalEn
     // a COLxROW grid of not-IT players in the next ROW checkpoints
     // a flag holder in the center of the ROW+1 checkpoint
 
-    const ROW_COUNT: usize = 2;
-    const COL_COUNT: usize = 4;
-    const GRID_COUNT: usize = ROW_COUNT * COL_COUNT;
-
     // spawn bomb holder
     commands.spawn((
         BotControllerBundle::new(entropy),
         BombTagIt,
+        CAR_NAME_KENMIN,
         car_from_track(
             &track,
             chunks.get(0).expect("Cars to spawn on known checkpoints"),
@@ -164,24 +166,33 @@ pub fn spawn_cars(commands: &mut Commands, track: &Track, entropy: &mut GlobalEn
             )
         })
         .collect::<Vec<_>>();
+
     for (index, car) in cars.into_iter().enumerate() {
         if index == random_grid_index as usize {
             // this one is the player
             commands.spawn((
                 car,
                 Player,
+                CarName::new("Me (You)"),
                 Controller::ArrowKeys,
                 CameraTracker::rect(-bounds_max, bounds_max),
                 CheckpointHighlightTracker,
             ));
         } else {
-            commands.spawn((car, BotControllerBundle::new(entropy)));
+            let random_name_index =
+                (entropy.next_u32() as f32 / u32::MAX as f32 * GRID_COUNT as f32) as usize;
+            commands.spawn((
+                car,
+                CAR_NAMES[random_name_index],
+                BotControllerBundle::new(entropy),
+            ));
         }
     }
 
     // spawn flag holder
     commands.spawn((
         BotControllerBundle::new(entropy),
+        CAR_NAME_KOOFY,
         LapTagIt,
         car_from_track(
             &track,
@@ -213,3 +224,18 @@ fn car_from_track(
         CanBeIt,
     )
 }
+
+const CAR_NAME_KOOFY: CarName = CarName::new("koofy");
+const CAR_NAME_KENMIN: CarName = CarName::new("BeautifulKenmin");
+const CAR_NAMES: [CarName; GRID_COUNT + 2] = [
+    CarName::new("snen"),
+    CarName::new("Pierre"),
+    CarName::new("Rodriguez"),
+    CarName::new("Cassandra"),
+    CarName::new("Samuel"),
+    CarName::new("Lin"),
+    CarName::new("Taylor"),
+    CarName::new("Archibald"),
+    CarName::new("Walter"),
+    CarName::new("Walter Two"),
+];

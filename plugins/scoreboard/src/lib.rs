@@ -23,14 +23,14 @@ impl ScoreboardPlugin {
         for scoreboard_entity in &scoreboard_query {
             commands
                 .ui_builder(scoreboard_entity)
-                .insert((NodeBundle::default(), ScoreboardUI))
+                .insert((NodeBundle::default(), Name::new("Scoreboard"), ScoreboardUI))
                 .style()
                 .position_type(PositionType::Absolute)
                 .right(Val::Px(10.))
                 .top(Val::Px(10.))
                 .height(Val::Auto)
-                .width(Val::Px(200.))
-                .background_color(Color::srgba(0.3, 0.3, 0.3, 0.2))
+                .width(Val::Px(240.))
+                .background_color(Color::srgba(0.3, 0.3, 0.3, 0.3))
                 .padding(UiRect::all(Val::Px(10.)));
         }
     }
@@ -38,25 +38,30 @@ impl ScoreboardPlugin {
     fn update_scoreboard(
         mut commands: Commands,
         scores_query: Query<(&CarName, Ref<Score>)>,
-        scoreboard_query: Query<(Entity, &ScoreboardUI)>,
+        scoreboards: Query<Entity, With<ScoreboardUI>>,
+        added_scoreboards: Query<Entity, Added<ScoreboardUI>>,
     ) {
-        if scores_query.iter().any(|(_, score)| score.is_changed()) {
+        let Ok(entity) = scoreboards.get_single() else {
+            return;
+        };
+
+        if scores_query.iter().any(|(_, score)| score.is_changed())
+            || added_scoreboards.contains(entity)
+        {
             let mut scores: Vec<(String, u32)> = scores_query
                 .iter()
-                .map(|(car_name, score)| ((*car_name).0.clone(), **score))
+                .map(|(car_name, score)| (car_name.to_string(), **score))
                 .collect::<Vec<(String, u32)>>();
-
+            info!("we have achieved");
             // b.cmp(a) in order to get reverse sorting with largest scores first
             scores.sort_by(|a, b| b.1.cmp(&a.1));
 
-            if let Ok((entity, _scoreboard)) = scoreboard_query.get_single() {
-                commands.entity(entity).despawn_descendants();
-                commands
-                    .ui_builder(entity)
-                    .generate_scoreboard_ui(scores)
-                    .style()
-                    .width(Val::Percent(100.));
-            }
+            commands.entity(entity).despawn_descendants();
+            commands
+                .ui_builder(entity)
+                .generate_scoreboard_ui(scores)
+                .style()
+                .width(Val::Percent(100.));
         }
     }
 }
@@ -98,12 +103,12 @@ pub struct Scoreboard;
 #[derive(Component)]
 pub struct ScoreboardUI;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Copy, Debug)]
 #[derive(Component, Deref)]
-pub struct CarName(pub String);
+pub struct CarName(pub &'static str);
 
 impl CarName {
-    pub fn new(name: String) -> Self {
+    pub const fn new(name: &'static str) -> Self {
         CarName(name)
     }
 }
