@@ -190,7 +190,7 @@ impl BotControllerPlugin {
     ) {
         for (car, bot, rotation, mut entropy) in &mut bots {
             let aggression = entropy.next_u32() as f32 / u32::MAX as f32;
-            let delta_rotation = bot.ideal_rotation - rotation.as_radians();
+            let delta_rotation = (bot.ideal_rotation - rotation.as_radians()).tan().atan();
             info!(
                 "{car}: {} <> {} => {delta_rotation} ({})",
                 bot.ideal_rotation,

@@ -4,7 +4,7 @@ use bot_controller::BotControllerBundle;
 use camera::CameraTracker;
 use car::{Car, CarBlueprint};
 use controller::Controller;
-use entropy::{ForkableRng, GlobalEntropy, RngCore};
+use entropy::{GlobalEntropy, RngCore};
 use laptag::{BombTagIt, CanBeIt, LapTagIt, Score};
 use track::{CheckpointHighlightTracker, Track, TrackInterior};
 
