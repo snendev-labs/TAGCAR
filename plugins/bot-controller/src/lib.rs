@@ -69,7 +69,7 @@ impl BotControllerPlugin {
                 .push(Goal::max_speed(bot_transform, **bot_velocity));
             new_goals
                 .0
-                .push(Goal::follow_track(bot_position, **bot_velocity, &track));
+                .push(Goal::follow_track(bot_position, **bot_velocity, track));
             // if bot_has_lap_tag && !bot_has_bomb_tag {
             //     if let Some(tracker) = tracker {
             //         new_goals.0.push(Goal::reach_checkpoints(
@@ -403,7 +403,7 @@ fn weighted_avg(collection: impl Iterator<Item = Influence>) -> Vec2 {
 // code adapted from https://github.com/tguichaoua/angulus/blob/main/src/angle.rs#L160
 fn modulo_radian(angle_radians: f32) -> f32 {
     use std::f32::consts::{PI, TAU};
-    debug_assert!(angle_radians.is_nan() || (-TAU <= angle_radians && angle_radians <= TAU));
+    debug_assert!(angle_radians.is_nan() || (-TAU..=TAU).contains(&angle_radians));
     let angle_radians = angle_radians % TAU;
     if angle_radians > PI {
         angle_radians - TAU

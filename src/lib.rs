@@ -144,8 +144,8 @@ pub fn spawn_cars(commands: &mut Commands, track: &Track, entropy: &mut GlobalEn
         BombTagIt,
         CAR_NAME_KENMIN,
         car_from_track(
-            &track,
-            chunks.get(0).expect("Cars to spawn on known checkpoints"),
+            track,
+            chunks.first().expect("Cars to spawn on known checkpoints"),
             0.5,
             false,
         ),
@@ -157,7 +157,7 @@ pub fn spawn_cars(commands: &mut Commands, track: &Track, entropy: &mut GlobalEn
         .flat_map(|row_index| (0..COL_COUNT).map(move |col_index| (col_index, row_index)))
         .map(|(col_index, row_index)| {
             car_from_track(
-                &track,
+                track,
                 chunks
                     .get(row_index * 2 + 2 + col_index % 2)
                     .expect("Cars to spawn on known checkpoints"),
@@ -195,7 +195,7 @@ pub fn spawn_cars(commands: &mut Commands, track: &Track, entropy: &mut GlobalEn
         CAR_NAME_KOOFY,
         LapTagIt,
         car_from_track(
-            &track,
+            track,
             chunks
                 .get(ROW_COUNT * 2 + 3)
                 .expect("Cars to spawn on known checkpoints"),
