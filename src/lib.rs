@@ -1,4 +1,4 @@
-#[cfg(feature = "debug")]
+#[cfg(feature = "debug-all")]
 use avian2d::prelude::PhysicsDebugPlugin;
 use avian2d::{prelude::Gravity, PhysicsPlugins};
 use bevy::{app::PluginGroupBuilder, input::common_conditions::input_just_pressed, prelude::*};
@@ -17,9 +17,9 @@ impl PluginGroup for TagcarPlugins {
     fn build(self) -> PluginGroupBuilder {
         let builder = PluginGroupBuilder::start::<Self>();
         #[cfg(feature = "debug")]
-        let builder = builder
-            .add(WorldInspectorPlugin::default())
-            .add(PhysicsDebugPlugin::default());
+        let builder = builder.add(WorldInspectorPlugin::default());
+        #[cfg(feature = "debug-all")]
+        let builder = builder.add(PhysicsDebugPlugin::default());
         let builder = builder
             .add_group(PhysicsPlugins::default())
             .add(EntropyPlugin)

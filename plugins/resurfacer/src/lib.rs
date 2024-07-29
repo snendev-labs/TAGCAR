@@ -126,7 +126,7 @@ impl ResurfacerPlugin {
                     let rand_decimal = entropy.next_u32() as f32 / u32::MAX as f32;
                     let checkpoint_width_position = (rand_decimal - 0.5) * checkpoint.size.x * 0.9;
                     let spawn_position = checkpoint.position
-                        + Vec2::from_angle(checkpoint.angle) * checkpoint_width_position;
+                        + Vec2::from_angle(checkpoint.chunk.angle()) * checkpoint_width_position;
 
                     // don't spawn if you collide with something else meaningful
                     if collider_positions
@@ -144,7 +144,6 @@ impl ResurfacerPlugin {
                 if let Some(mut checkpoint_obstacles) = checkpoint_obstacles {
                     for entity in checkpoint_obstacles.drain() {
                         if obstacles.contains(entity) {
-                            info!("Despawning obstacle {entity:?}");
                             commands.entity(entity).despawn_recursive();
                         }
                     }
@@ -165,7 +164,7 @@ impl ResurfacerPlugin {
     ) {
         for (track_entity, track) in &tracks {
             let resurfacer = Resurfacer::default();
-            let chunk = std::iter::repeat(track)
+            let checkpoint = std::iter::repeat(track)
                 .flat_map(|track| {
                     track
                         .chunks()
@@ -177,7 +176,7 @@ impl ResurfacerPlugin {
                 .expect("Checkpoints iter to be a ring");
             let resurfacer = commands
                 .spawn((
-                    resurfacer.bundle(chunk.position, chunk.angle),
+                    resurfacer.bundle(checkpoint.position, checkpoint.chunk.angle()),
                     entropy.fork_rng(),
                 ))
                 .id();

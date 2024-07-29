@@ -1,6 +1,6 @@
 use std::f32::consts::{FRAC_PI_2, PI};
 
-use avian2d::prelude::{Collider, CollisionStarted, RigidBody, Sensor};
+use avian2d::prelude::{Collider, CollisionLayers, CollisionStarted, LayerMask, RigidBody, Sensor};
 use bevy::color::palettes;
 use bevy::prelude::*;
 use bevy::utils::EntityHashSet;
@@ -113,7 +113,7 @@ pub struct Track {
 
 impl Default for Track {
     fn default() -> Self {
-        Self::new(1600., 800., 600., 10)
+        Self::new(1600., 800., 600., 12)
     }
 }
 
@@ -195,7 +195,8 @@ impl Track {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
+#[derive(Reflect)]
 pub struct TrackChunk {
     chunk_origin: Vec2,
     chunk_border_angle: f32,
@@ -259,12 +260,13 @@ pub struct Checkpoint {
     pub index: usize,
     pub size: Vec2,
     pub position: Vec2,
-    pub angle: f32,
+    pub chunk: TrackChunk,
 }
 
 impl Checkpoint {
-    const WIDTH: f32 = 4.;
+    pub const WIDTH: f32 = 4.;
     const Z_INDEX: f32 = 10.;
+    pub const COLLISION_LAYER: LayerMask = LayerMask(1 << 5);
 
     pub fn from_chunk(track: &Track, chunk: TrackChunk, index: usize) -> Self {
         let size = Vec2::new(track.thickness, Self::WIDTH);
@@ -275,13 +277,13 @@ impl Checkpoint {
             size,
             position: chunk.chunk_origin
                 + Vec2::from_angle(chunk.chunk_border_angle) * track_center_offset,
-            angle: chunk.chunk_border_angle,
+            chunk,
         }
     }
 
     pub fn transform(&self) -> Transform {
         Transform::from_translation(Vec3::new(self.position.x, self.position.y, Self::Z_INDEX))
-            .with_rotation(Quat::from_rotation_z(self.angle))
+            .with_rotation(Quat::from_rotation_z(self.chunk.angle()))
     }
 
     pub fn bundle(self) -> impl Bundle {
@@ -292,6 +294,7 @@ impl Checkpoint {
             Collider::rectangle(self.size.x, self.size.y),
             Sensor,
             SpatialBundle::from_transform(self.transform()),
+            CollisionLayers::new(Self::COLLISION_LAYER, LayerMask::ALL),
             self,
         )
     }

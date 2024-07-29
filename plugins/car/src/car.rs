@@ -1,4 +1,6 @@
-use avian2d::prelude::{Collider, CollisionLayers, LayerMask, Mass, RigidBody, Sleeping};
+use avian2d::prelude::{
+    AngularDamping, Collider, CollisionLayers, LayerMask, LinearDamping, Mass, RigidBody, Sleeping,
+};
 use bevy::{ecs::system::StaticSystemParam, prelude::*};
 
 use bevy_reactive_blueprints::{Blueprint, FromBlueprint};
@@ -14,8 +16,8 @@ impl Car {
     pub const LENGTH: f32 = 60.;
     pub const HEIGHT: f32 = 40.;
     pub const MASS: Mass = Mass(100.);
-    pub const ENGINE_POWER: f32 = 1e3;
-    pub const REVERSE_POWER: f32 = -8e2;
+    pub const ENGINE_POWER: f32 = 4.2e3;
+    pub const REVERSE_POWER: f32 = -3e3;
     pub const MAX_STEERING_DEG: f32 = 18.;
     pub const COLLISION_LAYER: LayerMask = LayerMask(1 << 1);
 }
@@ -35,19 +37,27 @@ pub struct CarPhysicsBundle {
     spatial: SpatialBundle,
     layer: CollisionLayers,
     mass: Mass,
+    linear_damping: LinearDamping,
+    angular_damping: AngularDamping,
     sleeping: Sleeping,
 }
 
 impl CarPhysicsBundle {
-    fn from_transform(transform: Transform) -> Self {
+    pub fn collider() -> Collider {
+        Collider::rectangle(Car::LENGTH, Car::WIDTH)
+    }
+
+    pub fn from_transform(transform: Transform) -> Self {
         CarPhysicsBundle {
             rigid_body: RigidBody::Dynamic,
-            collider: Collider::rectangle(Car::LENGTH, Car::WIDTH),
+            collider: Self::collider(),
             spatial: SpatialBundle::from_transform(transform),
             layer: CollisionLayers::new(
                 Car::COLLISION_LAYER,
                 LayerMask::ALL & !Wheel::COLLISION_LAYER,
             ),
+            linear_damping: LinearDamping(1.),
+            angular_damping: AngularDamping(1.5),
             sleeping: Sleeping,
             mass: Mass(100.),
         }

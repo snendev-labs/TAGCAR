@@ -34,7 +34,6 @@ impl CarControllerPlugin {
         car_query: Query<(Entity, &Controller), Without<InputMap<CarControl>>>,
     ) {
         for (car, controller) in &car_query {
-            println!("Adding controller");
             commands.entity(car).insert(InputManagerBundle::with_map(
                 controller.leafwing_input_map(),
             ));

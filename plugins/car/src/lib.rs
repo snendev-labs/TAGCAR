@@ -1,4 +1,7 @@
-use avian2d::prelude::{ExternalAngularImpulse, ExternalImpulse, LinearVelocity, Rotation};
+use avian2d::prelude::{
+    AngularVelocity, ExternalAngularImpulse, ExternalImpulse, ExternalTorque, Gravity,
+    LinearVelocity, Rotation,
+};
 use bevy::prelude::*;
 
 use bevy_reactive_blueprints::BlueprintPlugin;
@@ -23,6 +26,7 @@ impl Plugin for CarPlugin {
         app.add_systems(
             Update,
             (
+                Self::reset_overspinning_objects,
                 Self::apply_steering,
                 Self::apply_acceleration,
                 Self::apply_wheel_friction,
@@ -133,6 +137,40 @@ impl CarPlugin {
         }
     }
 
+    fn reset_overspinning_objects(
+        mut objects: Query<(
+            &mut AngularVelocity,
+            &mut ExternalAngularImpulse,
+            &mut ExternalTorque,
+            Option<&CarParts>,
+        )>,
+    ) {
+        let mut second_pass_entities = vec![];
+        for (mut velocity, mut impulse, mut torque, parts) in &mut objects {
+            if velocity.0 > 100. {
+                velocity.0 = 0.;
+                impulse.set_impulse(0.);
+                torque.set_torque(0.);
+                if let Some(parts) = parts {
+                    second_pass_entities.extend([
+                        parts.wheel_front_left,
+                        parts.wheel_front_right,
+                        parts.wheel_back_left,
+                        parts.wheel_back_right,
+                    ]);
+                }
+            }
+        }
+        for entity in second_pass_entities {
+            let Ok((mut velocity, mut impulse, mut torque, _)) = objects.get_mut(entity) else {
+                continue;
+            };
+            velocity.0 = 0.;
+            impulse.set_impulse(0.);
+            torque.set_torque(0.);
+        }
+    }
+
     fn apply_steering(
         cars: Query<(&Rotation, &CarParts, Option<&SteerAction>), With<Car>>,
         mut front_wheels: Query<(&Rotation, &mut ExternalAngularImpulse), With<FrontWheel>>,
@@ -144,11 +182,11 @@ impl CarPlugin {
                 .flat_map(|data| data)
             {
                 if let Some(SteerAction(steer_angle)) = steering {
-                    **impulse += *steer_angle * 40.;
+                    **impulse += *steer_angle * 100.;
                 } else {
                     let wheel_rotation = car_rotation.angle_between(*wheel_rotation);
                     if wheel_rotation > 1_f32.to_radians() {
-                        **impulse -= 40. * wheel_rotation * std::f32::consts::FRAC_1_PI;
+                        **impulse -= 100. * wheel_rotation * std::f32::consts::FRAC_1_PI;
                     }
                 }
             }
@@ -189,21 +227,31 @@ impl CarPlugin {
     fn apply_wheel_friction(
         mut wheels: Query<(&mut ExternalImpulse, &LinearVelocity, &Rotation), With<Wheel>>,
     ) {
-        const FRICTION: f32 = -0.9;
         for (mut impulse, velocity, rotation) in &mut wheels {
             if velocity.length() <= std::f32::EPSILON {
                 continue;
             }
             // higher friction when close to stopped
             let forward = Vec2::from_angle(rotation.as_radians());
-            let friction = **velocity * FRICTION;
-            let slip_angle: f32 = velocity.angle_between(forward);
-            let friction = if slip_angle.to_degrees() < 30. {
-                friction
+            // friction against the ground is proportional to the force of gravity exerted by the wheel
+            // each wheel should share about a quarter of the car's weight
+            let force_against_ground =
+                (Wheel::MASS.0 + Car::MASS.0 / 4.) * Gravity::default().0.length();
+
+            let main_axis_friction = if velocity.dot(forward).is_sign_positive() {
+                // main-axis friction with velocity facing forward can be calculated using the projection of the normalized
+                // velocity vector onto the forward vector
+                -0.8 * velocity.normalize().project_onto(forward) * force_against_ground
+            } else if velocity.dot(forward).is_sign_positive() {
+                // main-axis friction with velocity opposite forward is lower, since the car is slipping
+                -0.3 * velocity.normalize().project_onto(forward) * force_against_ground
             } else {
-                friction + friction.reject_from(forward) * (1. + slip_angle.sin() * 9.)
+                Vec2::ZERO
             };
-            **impulse += friction;
+            // in the cross-axis direction, friction is much higher
+            let cross_axis_friction =
+                -4. * velocity.normalize().reject_from(forward) * force_against_ground;
+            **impulse += main_axis_friction + cross_axis_friction;
         }
     }
 
