@@ -210,9 +210,9 @@ impl BotControllerPlugin {
             let mut steer_signum = if is_marginal_rotation {
                 0.
             } else if delta_rotation.is_sign_positive() {
-                -1.
-            } else if delta_rotation.is_sign_negative() {
                 1.
+            } else if delta_rotation.is_sign_negative() {
+                -1.
             } else {
                 0.
             };
