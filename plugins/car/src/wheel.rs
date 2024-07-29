@@ -11,7 +11,6 @@ use crate::Car;
 pub struct Wheel;
 
 impl Wheel {
-    pub const COLLISION_LAYER: u8 = 2;
     pub const WIDTH: f32 = 5.;
     pub const LENGTH: f32 = 10.;
     pub const MASS: Mass = Mass(10.);
@@ -19,6 +18,7 @@ impl Wheel {
         x: Car::LENGTH / 2.1,
         y: Car::WIDTH / 2. + Wheel::WIDTH,
     };
+    pub const COLLISION_LAYER: LayerMask = LayerMask(1 << 2);
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -48,10 +48,7 @@ impl WheelBundle {
             rigid_body: RigidBody::Dynamic,
             collider,
             spatial: SpatialBundle::from_transform(transform),
-            layer: CollisionLayers {
-                memberships: LayerMask(1 << Wheel::COLLISION_LAYER),
-                filters: LayerMask(1 << Wheel::COLLISION_LAYER),
-            },
+            layer: CollisionLayers::new(Wheel::COLLISION_LAYER, Wheel::COLLISION_LAYER),
             mass: Wheel::MASS,
             sleeping: Sleeping,
         }

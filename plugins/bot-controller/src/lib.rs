@@ -1,4 +1,6 @@
-use avian2d::prelude::{LinearVelocity, Rotation, ShapeCaster, ShapeHits};
+use avian2d::prelude::{
+    LayerMask, LinearVelocity, Rotation, ShapeCaster, ShapeHits, SpatialQueryFilter,
+};
 use bevy::prelude::*;
 
 use car::{AccelerateAction, CarPhysicsBundle, DrivingSystems, SteerAction};
@@ -240,7 +242,11 @@ impl BotControllerBundle {
             controller: BotController,
             entropy: entropy.fork_rng(),
             shapecast: ShapeCaster::new(CarPhysicsBundle::collider(), Vec2::ZERO, 0., Dir2::X)
-                .with_max_time_of_impact(300.),
+                .with_max_time_of_impact(300.)
+                .with_ignore_origin_penetration(true)
+                .with_query_filter(SpatialQueryFilter::from_mask(
+                    LayerMask::ALL & (!Checkpoint::COLLISION_LAYER),
+                )),
             bot: BotState::default(),
         }
     }

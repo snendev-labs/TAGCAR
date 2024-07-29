@@ -15,7 +15,7 @@ impl Car {
     pub const ENGINE_POWER: f32 = 1e3;
     pub const REVERSE_POWER: f32 = -8e2;
     pub const MAX_STEERING_DEG: f32 = 18.;
-    pub const COLLISION_LAYER: u8 = 1;
+    pub const COLLISION_LAYER: LayerMask = LayerMask(1 << 1);
 }
 
 #[derive(Clone, Debug, Default)]
@@ -46,10 +46,7 @@ impl CarPhysicsBundle {
             rigid_body: RigidBody::Dynamic,
             collider: Self::collider(),
             spatial: SpatialBundle::from_transform(transform),
-            layer: CollisionLayers {
-                memberships: LayerMask(1 << Car::COLLISION_LAYER),
-                filters: LayerMask::ALL,
-            },
+            layer: CollisionLayers::new(Car::COLLISION_LAYER, LayerMask::ALL),
             sleeping: Sleeping,
             mass: Mass(100.),
         }

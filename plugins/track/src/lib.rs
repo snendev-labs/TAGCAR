@@ -1,6 +1,6 @@
 use std::f32::consts::{FRAC_PI_2, PI};
 
-use avian2d::prelude::{Collider, CollisionStarted, RigidBody, Sensor};
+use avian2d::prelude::{Collider, CollisionLayers, CollisionStarted, LayerMask, RigidBody, Sensor};
 use bevy::color::palettes;
 use bevy::prelude::*;
 use bevy::utils::EntityHashSet;
@@ -264,9 +264,9 @@ pub struct Checkpoint {
 }
 
 impl Checkpoint {
-    pub const COLLISION_LAYER: u8 = 3;
     pub const WIDTH: f32 = 4.;
     const Z_INDEX: f32 = 10.;
+    pub const COLLISION_LAYER: LayerMask = LayerMask(1 << 5);
 
     pub fn from_chunk(track: &Track, chunk: TrackChunk, index: usize) -> Self {
         let size = Vec2::new(track.thickness, Self::WIDTH);
@@ -294,6 +294,7 @@ impl Checkpoint {
             Collider::rectangle(self.size.x, self.size.y),
             Sensor,
             SpatialBundle::from_transform(self.transform()),
+            CollisionLayers::new(Self::COLLISION_LAYER, LayerMask::ALL),
             self,
         )
     }
