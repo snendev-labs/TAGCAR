@@ -52,7 +52,7 @@ impl ScoreboardPlugin {
                 .iter()
                 .map(|(car_name, score)| (car_name.to_string(), **score))
                 .collect::<Vec<(String, u32)>>();
-            info!("we have achieved");
+
             // b.cmp(a) in order to get reverse sorting with largest scores first
             scores.sort_by(|a, b| b.1.cmp(&a.1));
 
