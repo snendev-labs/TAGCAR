@@ -3,7 +3,8 @@ use bevy::prelude::*;
 use bot_controller::BotControllerBundle;
 use camera::CameraTracker;
 use car::{Car, CarBlueprint};
-use entropy::{GlobalEntropy, RngCore};
+use controller::Controller;
+use entropy::{ForkableRng, GlobalEntropy, RngCore};
 use laptag::{BombTagIt, CanBeIt, LapTagIt, Score};
 use track::{CheckpointHighlightTracker, Track, TrackInterior};
 

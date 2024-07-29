@@ -5,12 +5,13 @@ edition = "2021"
 
 [features]
 default = []
-graphics = []
+graphics = ["dep:bevy_asset_loader"]
 
 [dependencies]
 avian2d = { workspace = true }
 bevy = { workspace = true }
 bevy_reactive_blueprints = { workspace = true }
+bevy_asset_loader = { workspace = true, optional = true }
 
 [dev-dependencies]
 bevy = { workspace = true, features = [

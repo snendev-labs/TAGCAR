@@ -3,8 +3,10 @@ use std::ops::DerefMut;
 use bevy::color::palettes;
 use bevy::ecs::system::{StaticSystemParam, SystemParam};
 use bevy::prelude::*;
-
-use bevy_reactive_blueprints::{AsChild, BlueprintPlugin, FromBlueprint};
+use bevy_asset_loader::prelude::{
+    AssetCollection, ConfigureLoadingState, LoadingState, LoadingStateAppExt,
+};
+use bevy_reactive_blueprints::{AsChild, Blueprint, BlueprintPlugin, FromBlueprint};
 
 use crate::{Checkpoint, CheckpointTracker, Track, TrackInterior, Wall};
 
@@ -18,12 +20,19 @@ impl Plugin for GraphicsPlugin {
                 TrackInteriorGraphicsBundle,
                 AsChild,
             >::default())
+            .add_plugins(BlueprintPlugin::<TrackLogo, TrackLogoGraphicsBundle, AsChild>::default())
             .add_plugins(BlueprintPlugin::<
                 Checkpoint,
                 CheckpointGraphicsBundle,
                 AsChild,
             >::default())
             .add_plugins(BlueprintPlugin::<Wall, WallGraphicsBundle, AsChild>::default())
+            .init_state::<TrackAssetsState>()
+            .add_loading_state(
+                LoadingState::new(TrackAssetsState::Loading)
+                    .load_collection::<TrackAssets>()
+                    .continue_to_state(TrackAssetsState::Loaded),
+            )
             .add_systems(Startup, Self::initialize_color_materials)
             .add_systems(Update, Self::track_checkpoint_colors);
     }
@@ -64,6 +73,20 @@ impl GraphicsPlugin {
             }
         }
     }
+}
+
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+#[derive(States)]
+pub enum TrackAssetsState {
+    #[default]
+    Loading,
+    Loaded,
+}
+
+#[derive(AssetCollection, Resource)]
+pub struct TrackAssets {
+    #[cfg_attr(not(target_arch = "wasm32"), asset(path = "textures/logo.png"))]
+    pub logo: Handle<Image>,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -111,6 +134,7 @@ impl FromBlueprint<Track> for TrackGraphicsBundle {
 #[derive(Bundle)]
 pub struct TrackInteriorGraphicsBundle {
     sprite: ColorMesh2dBundle,
+    logo: Blueprint<TrackLogo>,
 }
 
 impl TrackInteriorGraphicsBundle {
@@ -127,6 +151,7 @@ impl TrackInteriorGraphicsBundle {
                     .into(),
                 ..Default::default()
             },
+            logo: Blueprint::new(TrackLogo(interior.clone())),
         }
     }
 }
@@ -140,6 +165,56 @@ impl FromBlueprint<TrackInterior> for TrackInteriorGraphicsBundle {
     ) -> Self {
         let params = params.deref_mut();
         Self::new(interior, params.meshes.as_mut(), params.materials.as_mut())
+    }
+}
+
+#[derive(Clone, Debug, Default)]
+#[derive(Reflect)]
+pub struct TrackLogo(TrackInterior);
+
+#[derive(Bundle)]
+pub struct TrackLogoGraphicsBundle {
+    sprite: ColorMesh2dBundle,
+}
+
+impl TrackLogoGraphicsBundle {
+    pub fn new(
+        logo: &TrackLogo,
+        texture: Handle<Image>,
+        meshes: &mut Assets<Mesh>,
+        materials: &mut Assets<ColorMaterial>,
+    ) -> Self {
+        Self {
+            sprite: ColorMesh2dBundle {
+                material: materials.add(ColorMaterial {
+                    color: Color::WHITE,
+                    texture: Some(texture),
+                }),
+                mesh: meshes
+                    .add(Rectangle::new(logo.0.half_length * 0.8, logo.0.radius * 1.6).mesh())
+                    .into(),
+                transform: Transform::from_translation(Vec3::Z)
+                    .with_rotation(Quat::from_rotation_z(-std::f32::consts::FRAC_PI_2)),
+                ..Default::default()
+            },
+        }
+    }
+}
+
+impl FromBlueprint<TrackLogo> for TrackLogoGraphicsBundle {
+    type Params<'w, 's> = (GraphicsAssetsParams<'w>, Res<'w, TrackAssets>);
+
+    fn from_blueprint(
+        logo: &TrackLogo,
+        params: &mut StaticSystemParam<Self::Params<'_, '_>>,
+    ) -> Self {
+        let params = params.deref_mut();
+        Self::new(
+            logo,
+            params.1.logo.clone(),
+            params.0.meshes.as_mut(),
+            params.0.materials.as_mut(),
+        )
     }
 }
 
