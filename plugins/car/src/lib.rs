@@ -1,5 +1,6 @@
 use avian2d::prelude::{
-    ExternalAngularImpulse, ExternalImpulse, Gravity, LinearVelocity, Rotation,
+    AngularVelocity, ExternalAngularImpulse, ExternalImpulse, ExternalTorque, Gravity,
+    LinearVelocity, Rotation,
 };
 use bevy::prelude::*;
 
@@ -25,6 +26,7 @@ impl Plugin for CarPlugin {
         app.add_systems(
             Update,
             (
+                Self::reset_overspinning_objects,
                 Self::apply_steering,
                 Self::apply_acceleration,
                 Self::apply_wheel_friction,
@@ -132,6 +134,40 @@ impl CarPlugin {
                 wheel_back_left,
                 joint_back_left,
             });
+        }
+    }
+
+    fn reset_overspinning_objects(
+        mut objects: Query<(
+            &mut AngularVelocity,
+            &mut ExternalAngularImpulse,
+            &mut ExternalTorque,
+            Option<&CarParts>,
+        )>,
+    ) {
+        let mut second_pass_entities = vec![];
+        for (mut velocity, mut impulse, mut torque, parts) in &mut objects {
+            if velocity.0 > 100. {
+                velocity.0 = 0.;
+                impulse.set_impulse(0.);
+                torque.set_torque(0.);
+                if let Some(parts) = parts {
+                    second_pass_entities.extend([
+                        parts.wheel_front_left,
+                        parts.wheel_front_right,
+                        parts.wheel_back_left,
+                        parts.wheel_back_right,
+                    ]);
+                }
+            }
+        }
+        for entity in second_pass_entities {
+            let Ok((mut velocity, mut impulse, mut torque, _)) = objects.get_mut(entity) else {
+                continue;
+            };
+            velocity.0 = 0.;
+            impulse.set_impulse(0.);
+            torque.set_torque(0.);
         }
     }
 

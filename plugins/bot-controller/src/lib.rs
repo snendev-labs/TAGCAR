@@ -1,7 +1,7 @@
 use avian2d::prelude::{
     LayerMask, LinearVelocity, Rotation, ShapeCaster, ShapeHits, SpatialQueryFilter,
 };
-use bevy::{gizmos::gizmos, prelude::*};
+use bevy::prelude::*;
 
 use car::{AccelerateAction, CarPhysicsBundle, DrivingSystems, SteerAction};
 use entropy::{Entropy, ForkableRng, GlobalEntropy, RngCore};
@@ -235,6 +235,8 @@ impl BotControllerPlugin {
 
     #[cfg(feature = "gizmos")]
     fn render_bot_gizmos(mut gizmos: Gizmos, bots: Query<(&Transform, &BotState)>) {
+        use bevy::color::palettes::css::*;
+        use bevy::gizmos::gizmos;
         for (
             transform,
             BotState {
@@ -247,7 +249,6 @@ impl BotControllerPlugin {
             },
         ) in &bots
         {
-            use bevy::color::palettes::css::*;
             let start = transform.translation.xy();
             gizmos.arrow_2d(start, *ideal_position, BLUE);
             gizmos.arrow_2d(start, *facing_position_influence, GREEN_YELLOW);
