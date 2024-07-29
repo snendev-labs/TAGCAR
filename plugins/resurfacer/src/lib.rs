@@ -34,6 +34,7 @@ impl Plugin for ResurfacerPlugin {
 }
 
 impl ResurfacerPlugin {
+    #[allow(clippy::type_complexity)]
     fn track_last_checkpoint(
         tracks: Query<&TrackResurfacer, With<Track>>,
         mut resurfacers: Query<
@@ -71,7 +72,7 @@ impl ResurfacerPlugin {
             let index = resurfacer.last_checkpoint_index + 1;
             let next_chunk = chunks
                 .get(index)
-                .unwrap_or(chunks.get(0).expect("Track to have chunks"));
+                .unwrap_or(chunks.first().expect("Track to have chunks"));
             let next_checkpoint_position =
                 Checkpoint::from_chunk(track, next_chunk.clone(), index).position;
             **velocity = Resurfacer::SPEED
@@ -86,6 +87,7 @@ impl ResurfacerPlugin {
         }
     }
 
+    #[allow(clippy::type_complexity)]
     fn resurface_track(
         mut commands: Commands,
         mut resurfacers: Query<
@@ -171,8 +173,7 @@ impl ResurfacerPlugin {
                         .enumerate()
                         .map(|(index, chunk)| Checkpoint::from_chunk(track, chunk, index))
                 })
-                .skip(resurfacer.last_checkpoint_index)
-                .next()
+                .nth(resurfacer.last_checkpoint_index)
                 .expect("Checkpoints iter to be a ring");
             let resurfacer = commands
                 .spawn((
@@ -251,9 +252,9 @@ impl Peg {
 
     pub fn bundle(self, position: Vec2) -> impl Bundle {
         (
-            Blueprint::new(self.clone()),
+            Blueprint::new(self),
             self,
-            Name::new(format!("Peg Obstacle")),
+            Name::new("Peg Obstacle"),
             RigidBody::Static,
             SpatialBundle::from_transform(Transform::from_xyz(
                 position.x,

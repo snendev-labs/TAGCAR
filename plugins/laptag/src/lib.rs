@@ -48,6 +48,7 @@ impl Plugin for LapsPlugin {
 }
 
 impl LapsPlugin {
+    #[allow(clippy::type_complexity)]
     fn handle_tags(
         mut commands: Commands,
         mut lap_trackers: Query<&mut CheckpointTracker>,

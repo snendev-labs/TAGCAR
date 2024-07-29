@@ -49,7 +49,7 @@ impl TrackPlugin {
                 checkpoints.push(checkpoint);
             }
             // complete the ring by adding the first element to the end
-            chunks.push(chunks.get(0).unwrap().clone());
+            chunks.push(chunks.first().unwrap().clone());
             // iterate through all edges in the ring
             for chunk_pair in chunks.windows(2) {
                 let chunk1 = &chunk_pair[0];
@@ -136,7 +136,7 @@ impl Track {
             SpatialBundle::from_transform(Transform::from_rotation(Quat::from_rotation_z(
                 FRAC_PI_2,
             ))),
-            Name::new(format!("Track")),
+            Name::new("Track"),
             self,
         )
     }
@@ -241,7 +241,7 @@ impl TrackInterior {
     pub fn bundle(self) -> impl Bundle {
         (
             Blueprint::new(self.clone()),
-            Name::new(format!("Track interior")),
+            Name::new("Track interior"),
             RigidBody::Static,
             Collider::capsule(self.radius, self.half_length),
             Sensor,

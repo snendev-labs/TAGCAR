@@ -92,7 +92,7 @@ impl CarPlugin {
             for (wheel_rotation, mut impulse) in front_wheels
                 .get_many_mut([parts.wheel_front_left, parts.wheel_front_right])
                 .into_iter()
-                .flat_map(|data| data)
+                .flatten()
             {
                 if let Some(SteerAction(steer_angle)) = steering {
                     **impulse += *steer_angle * 100.;
@@ -141,7 +141,7 @@ impl CarPlugin {
         mut wheels: Query<(&mut ExternalImpulse, &LinearVelocity, &Rotation), With<Wheel>>,
     ) {
         for (mut impulse, velocity, rotation) in &mut wheels {
-            if velocity.length() <= std::f32::EPSILON {
+            if velocity.length() <= f32::EPSILON {
                 continue;
             }
             // higher friction when close to stopped
@@ -203,6 +203,7 @@ impl CarPlugin {
         }
     }
 
+    #[allow(clippy::type_complexity)]
     fn spawn_car_parts(
         mut commands: Commands,
         new_cars: Query<(Entity, &Transform), (With<Car>, Without<CarParts>)>,

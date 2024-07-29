@@ -32,6 +32,7 @@ impl Plugin for BotControllerPlugin {
 }
 
 impl BotControllerPlugin {
+    #[allow(clippy::type_complexity)]
     fn compute_goals(
         mut bots: Query<
             (
@@ -88,7 +89,7 @@ impl BotControllerPlugin {
 
             // now shapecast and figure out what to avoid
             if let Some(hit) = shape_hits.iter().next() {
-                if let Some((_, transform, _, has_bomb_tag)) = players.get(hit.entity).ok() {
+                if let Ok((_, transform, _, has_bomb_tag)) = players.get(hit.entity) {
                     if has_bomb_tag.is_some() && !bot_has_bomb_tag {
                         new_goals
                             .0
@@ -105,6 +106,7 @@ impl BotControllerPlugin {
         }
     }
 
+    #[allow(clippy::type_complexity)]
     fn decide_bot_controls(
         mut commands: Commands,
         mut bots: Query<
