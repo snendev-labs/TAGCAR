@@ -1,12 +1,13 @@
 use avian2d::prelude::{
     LayerMask, LinearVelocity, Rotation, ShapeCaster, ShapeHits, SpatialQueryFilter,
 };
-use bevy::prelude::*;
+use bevy::{gizmos::gizmos, prelude::*};
 
 use car::{AccelerateAction, CarPhysicsBundle, DrivingSystems, SteerAction};
 use entropy::{Entropy, ForkableRng, GlobalEntropy, RngCore};
 use laptag::{BombTagIt, CanBeIt, LapTagIt};
-use track::{Checkpoint, CheckpointTracker};
+use resurfacer::Peg;
+use track::{Checkpoint, CheckpointTracker, Wall};
 
 pub struct BotControllerPlugin;
 
@@ -15,7 +16,11 @@ impl Plugin for BotControllerPlugin {
         app.configure_sets(Update, BotControlSystems.before(DrivingSystems))
             .add_systems(
                 Update,
-                (Self::compute_goal_positions, Self::decide_bot_controls)
+                (
+                    Self::compute_goal_positions,
+                    Self::decide_bot_controls,
+                    Self::render_bot_gizmos,
+                )
                     .chain()
                     .in_set(BotControlSystems),
             );
@@ -42,6 +47,7 @@ impl BotControllerPlugin {
             ),
             With<CanBeIt>,
         >,
+        obstacles: Query<Entity, Or<(With<Wall>, With<Peg>)>>,
         checkpoints: Query<(Entity, &Checkpoint)>,
     ) {
         for (bot, mut bot_state, shape_hits, tracker) in &mut bots {
@@ -74,7 +80,7 @@ impl BotControllerPlugin {
                     bot_position.to_angle() + std::f32::consts::FRAC_PI_2
                 }
                 _ => panic!("Vec2::to_angle() returned outside [-pi, +pi]"),
-            };
+            } + std::f32::consts::FRAC_PI_2;
 
             let facing_direction = if bot_velocity.length() < 0.001 {
                 bot_transform.local_x().as_vec3().xy()
@@ -123,10 +129,8 @@ impl BotControllerPlugin {
 
             // now use raycast to choose how to interpret avoid_factor
             let mut shapecast_position_influence = None;
-            let nearest_hit = shape_hits
-                .iter()
-                // get the first contact, ignoring checkpoints
-                .find(|ray_hit| !checkpoints.contains(ray_hit.entity));
+            let nearest_hit = shape_hits.iter().next();
+
             if let Some((transform, _, has_lap, has_bomb)) =
                 nearest_hit.and_then(|ray_hit| players.get(ray_hit.entity).ok())
             {
@@ -178,6 +182,10 @@ impl BotControllerPlugin {
                 ideal_position: ideal_position,
                 ideal_rotation: (ideal_position - bot_position).to_angle(),
                 avoid_factor,
+                facing_position_influence,
+                track_position_influence,
+                lap_chase_position_influence,
+                shapecast_position_influence,
             };
             info!("{bot}: {:?}", *bot_state);
             *bot_state = next_state;
@@ -198,24 +206,56 @@ impl BotControllerPlugin {
                 bot.ideal_rotation - rotation.as_radians()
             );
             let is_marginal_rotation = delta_rotation.abs() < std::f32::consts::PI / 64.;
-            let mut steering = if is_marginal_rotation {
+            let mut steer_signum = if is_marginal_rotation {
                 0.
             } else if delta_rotation.is_sign_positive() {
-                1.
-            } else if delta_rotation.is_sign_negative() {
                 -1.
+            } else if delta_rotation.is_sign_negative() {
+                1.
             } else {
                 0.
             };
             if delta_rotation.abs() > std::f32::consts::FRAC_PI_2 {
                 commands.entity(car).insert(AccelerateAction::Backward);
-                steering = -steering;
+                steer_signum = -steer_signum;
             } else {
                 commands.entity(car).insert(AccelerateAction::Forward);
             }
-            commands.entity(car).insert(SteerAction(
-                steering * aggression * bot.avoid_factor.abs() / 5.,
-            ));
+            let avoid_factor = if bot.avoid_factor.abs() <= std::f32::EPSILON {
+                1.
+            } else {
+                bot.avoid_factor.abs() / 5.
+            };
+            let steering = steer_signum * aggression * avoid_factor;
+            info!("steering: {steering} <- {steer_signum}");
+            commands.entity(car).insert(SteerAction(steering));
+        }
+    }
+
+    fn render_bot_gizmos(mut gizmos: Gizmos, bots: Query<(&Transform, &BotState)>) {
+        for (
+            transform,
+            BotState {
+                ideal_position,
+                facing_position_influence,
+                track_position_influence,
+                lap_chase_position_influence,
+                shapecast_position_influence,
+                ..
+            },
+        ) in &bots
+        {
+            use bevy::color::palettes::css::*;
+            let start = transform.translation.xy();
+            gizmos.arrow_2d(start, *ideal_position, BLUE);
+            gizmos.arrow_2d(start, *facing_position_influence, GREEN_YELLOW);
+            gizmos.arrow_2d(start, *track_position_influence, PURPLE);
+            if let Some(lap_chase_position_influence) = lap_chase_position_influence {
+                gizmos.arrow_2d(start, *lap_chase_position_influence, ORANGE);
+            }
+            if let Some(shapecast_position_influence) = shapecast_position_influence {
+                gizmos.arrow_2d(start, *shapecast_position_influence, PINK);
+            }
         }
     }
 }
@@ -258,4 +298,8 @@ struct BotState {
     pub ideal_position: Vec2,
     pub ideal_rotation: f32,
     pub avoid_factor: f32,
+    pub facing_position_influence: Vec2,
+    pub track_position_influence: Vec2,
+    pub lap_chase_position_influence: Option<Vec2>,
+    pub shapecast_position_influence: Option<Vec2>,
 }

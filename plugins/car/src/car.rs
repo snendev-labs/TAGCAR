@@ -1,4 +1,6 @@
-use avian2d::prelude::{Collider, CollisionLayers, LayerMask, Mass, RigidBody, Sleeping};
+use avian2d::prelude::{
+    AngularDamping, Collider, CollisionLayers, LayerMask, LinearDamping, Mass, RigidBody, Sleeping,
+};
 use bevy::{ecs::system::StaticSystemParam, prelude::*};
 
 use bevy_reactive_blueprints::{Blueprint, FromBlueprint};
@@ -33,6 +35,8 @@ pub struct CarPhysicsBundle {
     spatial: SpatialBundle,
     layer: CollisionLayers,
     mass: Mass,
+    linear_damping: LinearDamping,
+    angular_damping: AngularDamping,
     sleeping: Sleeping,
 }
 
@@ -47,6 +51,8 @@ impl CarPhysicsBundle {
             collider: Self::collider(),
             spatial: SpatialBundle::from_transform(transform),
             layer: CollisionLayers::new(Car::COLLISION_LAYER, LayerMask::ALL),
+            linear_damping: LinearDamping(0.1),
+            angular_damping: AngularDamping(0.1),
             sleeping: Sleeping,
             mass: Mass(100.),
         }

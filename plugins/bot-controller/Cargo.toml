@@ -5,8 +5,9 @@ edition = "2021"
 
 [dependencies]
 avian2d = { workspace = true }
-bevy = { workspace = true }
+bevy = { workspace = true, features = ["bevy_gizmos"] }
 car = { workspace = true }
 entropy = { workspace = true }
 laptag = { workspace = true }
+resurfacer = { workspace = true }
 track = { workspace = true }
