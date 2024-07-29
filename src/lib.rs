@@ -122,7 +122,7 @@ fn event_occurs_on_camera<E: GetEntities + Event>(
             return true;
         }
     }
-    return false;
+    false
 }
 
 const ROW_COUNT: usize = 4;
