@@ -94,5 +94,6 @@ bevy_asset_loader = { workspace = true }
 bevy_kira_audio = { workspace = true, optional = true }
 bevy_reactive_blueprints = { workspace = true }
 bevy-inspector-egui = { workspace = true, optional = true }
+sickle_ui = { workspace = true }
 
 # stdx

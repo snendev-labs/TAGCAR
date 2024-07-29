@@ -195,7 +195,8 @@ impl BotControllerBundle {
             controller: BotController,
             entropy: entropy.fork_rng(),
             shapecast: ShapeCaster::new(CarPhysicsBundle::collider(), Vec2::ZERO, 0., Dir2::X)
-                .with_max_time_of_impact(300.)
+                .with_max_hits(2)
+                .with_max_time_of_impact(250.)
                 .with_ignore_origin_penetration(true)
                 .with_query_filter(SpatialQueryFilter::from_mask(
                     LayerMask::ALL & (!Checkpoint::COLLISION_LAYER),

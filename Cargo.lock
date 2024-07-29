@@ -4456,6 +4456,7 @@ dependencies = [
  "laptag",
  "resurfacer",
  "scoreboard",
+ "sickle_ui",
  "slowmo",
  "track",
 ]

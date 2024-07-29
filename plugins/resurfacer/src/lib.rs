@@ -122,7 +122,7 @@ impl ResurfacerPlugin {
                     .iter()
                     .map(|transform| transform.translation.xy())
                     .collect::<Vec<_>>();
-                while entropy.next_u32() < u32::MAX / 3 {
+                while entropy.next_u32() < 2 * (u32::MAX / 5) {
                     let rand_decimal = entropy.next_u32() as f32 / u32::MAX as f32;
                     let checkpoint_width_position = (rand_decimal - 0.5) * checkpoint.size.x * 0.9;
                     let spawn_position = checkpoint.position
@@ -200,7 +200,7 @@ pub struct Resurfacer {
 impl Resurfacer {
     const STARTING_CHECKPOINT: usize = 25;
     const WIDTH: f32 = 30.;
-    const Z_INDEX: f32 = 15.;
+    const Z_INDEX: f32 = 25.;
     const SPEED: f32 = 120.;
 
     fn transform(position: Vec2, angle: f32) -> Transform {
@@ -246,7 +246,7 @@ pub enum Obstacle {
 pub struct Peg;
 
 impl Peg {
-    const Z_INDEX: f32 = 12.;
+    const Z_INDEX: f32 = 20.;
     const RADIUS: f32 = 20.;
 
     pub fn bundle(self, position: Vec2) -> impl Bundle {
@@ -280,77 +280,5 @@ impl CheckpointObstacles {
 
     pub fn drain(&mut self) -> impl Iterator<Item = Entity> + '_ {
         self.0.drain(..)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use std::time::Duration;
-
-    use avian2d::{
-        prelude::{Physics, PhysicsTime, TimestepMode},
-        PhysicsPlugins,
-    };
-    use bevy::{ecs::system::RunSystemOnce, scene::ScenePlugin};
-
-    use track::{TrackInterior, TrackPlugin};
-
-    use super::*;
-
-    fn test_app() -> (App, Entity, Entity, Entity) {
-        let mut app = App::new();
-        app.add_plugins((
-            MinimalPlugins,
-            AssetPlugin::default(),
-            ScenePlugin,
-            PhysicsPlugins::default(),
-        ));
-        app.insert_resource(Time::<Physics>::from_timestep(TimestepMode::FixedOnce {
-            delta: Duration::from_secs_f32(1. / 60.),
-        }));
-        app.add_plugins(TrackPlugin);
-        let (e1, e2, e3) = app.world_mut().run_system_once(spawn_track_and_resurfacer);
-        (app, e1, e2, e3)
-    }
-
-    fn spawn_track_and_resurfacer(mut commands: Commands) -> (Entity, Entity, Entity) {
-        let track = Track::default();
-        let interior = TrackInterior::from_track(&track);
-        let tracker = commands
-            .spawn((
-                CheckpointTracker::default(),
-                Resurfacer::default(),
-                RigidBody::Kinematic,
-                Collider::rectangle(10., 10.),
-                SpatialBundle::from_transform(Transform::from_xyz(track.half_length(), 0., 0.)),
-            ))
-            .id();
-        let interior = commands.spawn(interior.bundle()).id();
-        let track = commands.spawn(track.bundle()).id();
-        (tracker, track, interior)
-    }
-
-    #[test]
-    fn test_lap_completion() {
-        let (mut _app, _tracker, _track, _) = test_app();
-
-        // let track = app.world_mut().get::<Track>(track).unwrap();
-        // for (index, (position, angle)) in track.clone().checkpoints().enumerate() {
-        //     let events = app.world_mut().resource::<Events<LapComplete>>();
-        //     let mut reader = events.get_reader();
-        //     assert!(reader.read(events).find(|lap| ***lap == tracker).is_none());
-        //     let reached_checkpoints = app.world_mut().get::<CheckpointTracker>(tracker).unwrap();
-        //     assert_eq!(reached_checkpoints.len(), index);
-        //     let mut transform = app.world_mut().get_mut::<Transform>(tracker).unwrap();
-        //     *transform = Checkpoint::transform(position, angle);
-        //     app.update();
-        //     app.update();
-        // }
-
-        // let events = app.world_mut().resource::<Events<LapComplete>>();
-        // let mut reader = events.get_reader();
-        // assert!(reader.read(events).find(|lap| ***lap == tracker).is_some());
-        // let reached_checkpoints = app.world_mut().get::<CheckpointTracker>(tracker).unwrap();
-        // assert_eq!(reached_checkpoints.len(), 0);
     }
 }

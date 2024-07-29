@@ -69,11 +69,16 @@ impl CarPhysicsBundle {
 pub struct CarBlueprint {
     pub origin: Vec2,
     pub angle: f32,
+    pub is_player: bool,
 }
 
 impl CarBlueprint {
-    pub fn new(origin: Vec2, angle: f32) -> Blueprint<Self> {
-        Blueprint::new(Self { origin, angle })
+    pub fn new(origin: Vec2, angle: f32, is_player: bool) -> Blueprint<Self> {
+        Blueprint::new(Self {
+            origin,
+            angle,
+            is_player,
+        })
     }
 }
 
@@ -110,4 +115,19 @@ pub struct CarParts {
     pub(crate) joint_back_left: Entity,
     pub(crate) wheel_back_right: Entity,
     pub(crate) joint_back_right: Entity,
+}
+
+impl CarParts {
+    pub fn entities(&self) -> [Entity; 8] {
+        [
+            self.wheel_front_left,
+            self.joint_front_left,
+            self.wheel_front_right,
+            self.joint_front_right,
+            self.wheel_back_left,
+            self.joint_back_left,
+            self.wheel_back_right,
+            self.joint_back_right,
+        ]
+    }
 }

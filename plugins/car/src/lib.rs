@@ -32,7 +32,8 @@ impl Plugin for CarPlugin {
                 Self::apply_wheel_friction,
                 Self::apply_car_drag,
                 Self::clear_action_components,
-                Self::spawn_car_wheels,
+                Self::despawn_car_parts,
+                Self::spawn_car_parts,
             )
                 .chain()
                 .in_set(DrivingSystems),
@@ -49,94 +50,6 @@ impl Plugin for CarPlugin {
 }
 
 impl CarPlugin {
-    fn spawn_car_wheels(
-        mut commands: Commands,
-        new_cars: Query<(Entity, &Transform), (With<Car>, Without<CarParts>)>,
-    ) {
-        for (car, transform) in &new_cars {
-            let front_right_offset = Wheel::OFFSET;
-            let front_left_offset = Wheel::OFFSET * Vec2::new(1., -1.);
-            let back_right_offset = Wheel::OFFSET * Vec2::new(-1., 1.);
-            let back_left_offset = Wheel::OFFSET * Vec2::new(-1., -1.);
-
-            fn add_offset(transform: &Transform, offset: Vec2) -> Transform {
-                let offset = transform.rotation * Vec3::new(offset.x, offset.y, 0.);
-                transform
-                    .with_translation(transform.translation + Vec3::new(offset.x, offset.y, 0.))
-            }
-
-            // front right wheel
-            let wheel_front_right = commands
-                .spawn((
-                    Name::new("Wheel (F,R)"),
-                    FrontWheel,
-                    WheelBundle::new(add_offset(transform, front_right_offset)),
-                ))
-                .id();
-            let joint_front_right = commands
-                .spawn((
-                    Name::new("Wheel Joint (F,R)"),
-                    FrontWheel,
-                    FrontWheelJointBundle::new(car, wheel_front_right, front_right_offset),
-                ))
-                .id();
-            // front left wheel
-            let wheel_front_left = commands
-                .spawn((
-                    Name::new("Wheel (F,L)"),
-                    FrontWheel,
-                    WheelBundle::new(add_offset(transform, front_left_offset)),
-                ))
-                .id();
-            let joint_front_left = commands
-                .spawn((
-                    Name::new("Wheel Joint (F,L)"),
-                    FrontWheel,
-                    FrontWheelJointBundle::new(car, wheel_front_left, front_left_offset),
-                ))
-                .id();
-            // back right wheel
-            let wheel_back_right = commands
-                .spawn((
-                    Name::new("Wheel (B,R)"),
-                    BackWheel,
-                    WheelBundle::new(add_offset(transform, back_right_offset)),
-                ))
-                .id();
-            let joint_back_right = commands
-                .spawn((
-                    Name::new("Wheel Joint (B,R)"),
-                    BackWheel,
-                    BackWheelJointBundle::new(car, wheel_back_right, back_right_offset),
-                ))
-                .id();
-            let wheel_back_left = commands
-                .spawn((
-                    Name::new("Wheel (B,L)"),
-                    BackWheel,
-                    WheelBundle::new(add_offset(transform, back_left_offset)),
-                ))
-                .id();
-            let joint_back_left = commands
-                .spawn((
-                    Name::new("Wheel Joint (B,L)"),
-                    BackWheel,
-                    BackWheelJointBundle::new(car, wheel_back_left, back_left_offset),
-                ))
-                .id();
-            commands.entity(car).insert(CarParts {
-                wheel_front_right,
-                joint_front_right,
-                wheel_front_left,
-                joint_front_left,
-                wheel_back_right,
-                joint_back_right,
-                wheel_back_left,
-                joint_back_left,
-            });
-        }
-    }
-
     fn reset_overspinning_objects(
         mut objects: Query<(
             &mut AngularVelocity,
@@ -271,6 +184,110 @@ impl CarPlugin {
                 .entity(car_entity)
                 .remove::<SteerAction>()
                 .remove::<AccelerateAction>();
+        }
+    }
+
+    fn despawn_car_parts(
+        mut commands: Commands,
+        mut removed_cars: RemovedComponents<Car>,
+        parts: Query<(Entity, &PartOfCar)>,
+    ) {
+        let removed_cars = removed_cars.read().collect::<Vec<_>>();
+        if removed_cars.is_empty() {
+            return;
+        }
+        for (entity, part_of_car) in &parts {
+            if removed_cars.contains(part_of_car) {
+                commands.entity(entity).despawn_recursive();
+            }
+        }
+    }
+
+    fn spawn_car_parts(
+        mut commands: Commands,
+        new_cars: Query<(Entity, &Transform), (With<Car>, Without<CarParts>)>,
+    ) {
+        for (car, transform) in &new_cars {
+            let front_right_offset = Wheel::OFFSET;
+            let front_left_offset = Wheel::OFFSET * Vec2::new(1., -1.);
+            let back_right_offset = Wheel::OFFSET * Vec2::new(-1., 1.);
+            let back_left_offset = Wheel::OFFSET * Vec2::new(-1., -1.);
+
+            fn add_offset(transform: &Transform, offset: Vec2) -> Transform {
+                let offset = transform.rotation * Vec3::new(offset.x, offset.y, 0.);
+                transform
+                    .with_translation(transform.translation + Vec3::new(offset.x, offset.y, 0.))
+            }
+
+            // front right wheel
+            let wheel_front_right = commands
+                .spawn((
+                    Name::new("Wheel (F,R)"),
+                    FrontWheel,
+                    WheelBundle::new(car, add_offset(transform, front_right_offset)),
+                ))
+                .id();
+            let joint_front_right = commands
+                .spawn((
+                    Name::new("Wheel Joint (F,R)"),
+                    FrontWheel,
+                    FrontWheelJointBundle::new(car, wheel_front_right, front_right_offset),
+                ))
+                .id();
+            // front left wheel
+            let wheel_front_left = commands
+                .spawn((
+                    Name::new("Wheel (F,L)"),
+                    FrontWheel,
+                    WheelBundle::new(car, add_offset(transform, front_left_offset)),
+                ))
+                .id();
+            let joint_front_left = commands
+                .spawn((
+                    Name::new("Wheel Joint (F,L)"),
+                    FrontWheel,
+                    FrontWheelJointBundle::new(car, wheel_front_left, front_left_offset),
+                ))
+                .id();
+            // back right wheel
+            let wheel_back_right = commands
+                .spawn((
+                    Name::new("Wheel (B,R)"),
+                    BackWheel,
+                    WheelBundle::new(car, add_offset(transform, back_right_offset)),
+                ))
+                .id();
+            let joint_back_right = commands
+                .spawn((
+                    Name::new("Wheel Joint (B,R)"),
+                    BackWheel,
+                    BackWheelJointBundle::new(car, wheel_back_right, back_right_offset),
+                ))
+                .id();
+            let wheel_back_left = commands
+                .spawn((
+                    Name::new("Wheel (B,L)"),
+                    BackWheel,
+                    WheelBundle::new(car, add_offset(transform, back_left_offset)),
+                ))
+                .id();
+            let joint_back_left = commands
+                .spawn((
+                    Name::new("Wheel Joint (B,L)"),
+                    BackWheel,
+                    BackWheelJointBundle::new(car, wheel_back_left, back_left_offset),
+                ))
+                .id();
+            commands.entity(car).insert(CarParts {
+                wheel_front_right,
+                joint_front_right,
+                wheel_front_left,
+                joint_front_left,
+                wheel_back_right,
+                joint_back_right,
+                wheel_back_left,
+                joint_back_left,
+            });
         }
     }
 }

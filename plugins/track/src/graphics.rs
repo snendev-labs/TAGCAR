@@ -294,7 +294,7 @@ impl WallGraphicsBundle {
     ) -> Self {
         Self {
             sprite: ColorMesh2dBundle {
-                material: materials.add(Color::Srgba(palettes::css::ROSY_BROWN)),
+                material: materials.add(Color::Srgba(palettes::tailwind::AMBER_800)),
                 mesh: meshes
                     .add(Rectangle::new(wall.size.x, wall.size.y).mesh())
                     .into(),

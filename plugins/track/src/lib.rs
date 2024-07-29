@@ -350,7 +350,7 @@ pub struct Wall {
 }
 
 impl Wall {
-    const Z_INDEX: f32 = 10.;
+    const Z_INDEX: f32 = 15.;
     const THICKNESS: f32 = 10.;
 
     pub fn between_chunks(track: &Track, chunk1: TrackChunk, chunk2: TrackChunk) -> Self {

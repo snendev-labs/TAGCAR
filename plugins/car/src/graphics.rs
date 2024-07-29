@@ -1,4 +1,3 @@
-use bevy::color::palettes;
 use bevy::ecs::system::StaticSystemParam;
 use bevy::prelude::*;
 use bevy::sprite::MaterialMesh2dBundle;
@@ -31,13 +30,18 @@ impl FromBlueprint<CarBlueprint> for CarGraphicsBundle {
     type Params<'w, 's> = (ResMut<'w, Assets<Mesh>>, ResMut<'w, Assets<ColorMaterial>>);
 
     fn from_blueprint(
-        _blueprint: &CarBlueprint,
+        blueprint: &CarBlueprint,
         params: &mut StaticSystemParam<Self::Params<'_, '_>>,
     ) -> Self {
+        let color = if blueprint.is_player {
+            Color::srgb(0.3, 0.63, 0.98)
+        } else {
+            Color::srgb(0.77, 0.42, 0.34)
+        };
         CarGraphicsBundle {
             shape: MaterialMesh2dBundle {
                 mesh: params.0.add(Rectangle::new(Car::LENGTH, Car::WIDTH)).into(),
-                material: params.1.add(Color::from(palettes::css::AQUA)),
+                material: params.1.add(color),
                 ..Default::default()
             },
         }
@@ -68,7 +72,7 @@ impl FromBlueprint<Wheel> for WheelGraphicsBundle {
                     .0
                     .add(Rectangle::new(Wheel::LENGTH, Wheel::WIDTH))
                     .into(),
-                material: params.1.add(Color::from(palettes::css::BLUE)),
+                material: params.1.add(Color::srgb(0.08, 0.08, 0.13)),
                 ..Default::default()
             },
         }
