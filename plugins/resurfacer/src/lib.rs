@@ -144,7 +144,6 @@ impl ResurfacerPlugin {
                 if let Some(mut checkpoint_obstacles) = checkpoint_obstacles {
                     for entity in checkpoint_obstacles.drain() {
                         if obstacles.contains(entity) {
-                            info!("Despawning obstacle {entity:?}");
                             commands.entity(entity).despawn_recursive();
                         }
                     }

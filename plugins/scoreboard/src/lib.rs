@@ -41,7 +41,6 @@ impl ScoreboardPlugin {
         scoreboard_query: Query<(Entity, &ScoreboardUI)>,
     ) {
         if scores_query.iter().any(|(_, score)| score.is_changed()) {
-            println!("Score change");
             let mut scores: Vec<(String, u32)> = scores_query
                 .iter()
                 .map(|(car_name, score)| ((*car_name).0.clone(), **score))
@@ -51,7 +50,6 @@ impl ScoreboardPlugin {
             scores.sort_by(|a, b| b.1.cmp(&a.1));
 
             if let Ok((entity, _scoreboard)) = scoreboard_query.get_single() {
-                println!("Updating scoreboard");
                 commands.entity(entity).despawn_descendants();
                 commands
                     .ui_builder(entity)

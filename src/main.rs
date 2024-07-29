@@ -1,6 +1,5 @@
 use bevy::prelude::*;
 
-use bevy_reactive_blueprints::Blueprint;
 use bot_controller::BotControllerBundle;
 use camera::CameraTracker;
 use car::{Car, CarBlueprint};

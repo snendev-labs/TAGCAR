@@ -251,7 +251,6 @@ impl CarPlugin {
             // in the cross-axis direction, friction is much higher
             let cross_axis_friction =
                 -4. * velocity.normalize().reject_from(forward) * force_against_ground;
-            info!("{} X {forward} <-> {cross_axis_friction}", **velocity);
             **impulse += main_axis_friction + cross_axis_friction;
         }
     }
