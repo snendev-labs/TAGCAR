@@ -81,6 +81,19 @@ impl BotControllerPlugin {
             //     }
             // }
 
+            if bot_position.x.abs() < (track.half_length() - track.radius())
+                && bot_position.y.abs() < track.interior_radius()
+            {
+                let max_length_squared = Vec2::new(
+                    track.half_length() - track.radius(),
+                    track.interior_radius(),
+                )
+                .length();
+                new_goals.0.push(Goal::AvoidGrass(
+                    bot_position.length_squared() / max_length_squared,
+                ));
+            }
+
             // now shapecast to check if we are trapped against something
             if let Some(hit) = shape_hits.iter().next() {
                 if let Ok(transform) = players
@@ -168,7 +181,7 @@ impl BotControllerPlugin {
                     goal.to_influence(bot_position, **velocity).target,
                     match goal {
                         Goal::FollowTrack(_) => PURPLE,
-                        Goal::MaxSpeed(_) => BLUE,
+                        Goal::AvoidGrass(_) => BLUE,
                         _ => PINK,
                     },
                 );
@@ -219,6 +232,7 @@ struct BotGoals(Vec<Goal>);
 enum Goal {
     MaxSpeed(Vec2),
     FollowTrack(Vec2),
+    AvoidGrass(f32),
     Avoid { target: Vec2, time_of_impact: f32 },
     // ReachCheckpoints(Vec<Vec2>),
 }
@@ -335,7 +349,11 @@ impl Goal {
     fn to_influence(&self, bot_position: Vec2, bot_velocity: Vec2) -> Influence {
         match self {
             Goal::MaxSpeed(target) => Influence::new(*target, 1.),
-            Goal::FollowTrack(target) => Influence::new(*target, 5.),
+            Goal::FollowTrack(target) => Influence::new(*target, 8.),
+            Goal::AvoidGrass(strength) => Influence::new(
+                bot_position + (bot_position.normalize() + bot_velocity.normalize()) * 50.,
+                strength * 5.,
+            ),
             Goal::Avoid {
                 target,
                 time_of_impact,
